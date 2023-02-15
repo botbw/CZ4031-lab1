@@ -191,11 +191,11 @@ private:
         return ret;
     }
 
-    void _deleteAtLeaf(node *ch1, const _key &key) {
-        // delete at index i
-        size_t i =
-                (size_t)(lower_bound(ch1->keys, ch1->keys + ch1->cnt, key) - ch1->keys);
-    }
+//    void _deleteAtLeaf(node *ch1, const _key &key) {
+//        // delete at index i
+//        size_t i =
+//                (size_t)(lower_bound(ch1->keys, ch1->keys + ch1->cnt, key) - ch1->keys);
+//    }
 
 public:
     static size_t globalSize() { return globalNodeCnt; }
@@ -261,9 +261,9 @@ public:
         }
     }
 
-    void _remove(const _key &key) {
-
-    }
+//    void _remove(const _key &key) {
+//
+//    }
 
     // query single key, nullptr if doesn't exist
     _record *query(const _key *key) const {
