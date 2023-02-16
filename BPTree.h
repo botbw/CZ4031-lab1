@@ -8,11 +8,11 @@ using namespace std;
 template <typename _key, typename _record, int N>
 class BPTree {
 private:
-    // keys, child, cnt, height are on disk
+    // keys, childs, cnt, height are on disk
     struct node {
         _key keys[N];
-        // child[i] is _record* or node*
-        void *child[N + 1];
+        // childs[i] is _record* or node*
+        void *childs[N + 1];
         int cnt, height;
 
         // for debugging
@@ -57,27 +57,21 @@ private:
         deleteNodeGlobal(p);
     }
 
-    pair<node *, int> _searchNode(node *cur, const _key &key) const {
-        int i =
-                (int)(lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
-        // leaf node
-        if (cur->height == 0) return pair<node *, int>(cur, i);
-        // non leaf
-        if (i >= cur->cnt || key < cur->keys[i]) i--;
-        return _searchNode((node *)cur->child[i + 1], key);
-    }
-
     // for non leaf node
     void _updateHeight(node *cur) {
-        node *ch = (node *)cur->child[0];
+        node *ch = (node *)cur->childs[0];
         int mx = ch->height;
         for (int i = 0; i < cur->cnt; i++) {
-            ch = (node *)cur->child[i + 1];
+            ch = (node *)cur->childs[i + 1];
             mx = max(mx, ch->height);
         }
         cur->height = mx + 1;
     }
 
+    // insert record ptr at leaf node
+    //
+    // if split happened return the new node ptr
+    // return nullptr
     node *_insertAtLeaf(node *ch1, const _key &key, _record *record) {
         // insert at index i
         int i =
@@ -86,20 +80,20 @@ private:
             ch1->cnt++;
             for (int j = ch1->cnt - 1; j > i; j--) {
                 ch1->keys[j] = ch1->keys[j - 1];
-                ch1->child[j] = ch1->child[j - 1];
+                ch1->childs[j] = ch1->childs[j - 1];
             }
             ch1->keys[i] = key;
-            ch1->child[i] = (void *)record;
+            ch1->childs[i] = (void *)record;
             // no split
             return nullptr;
         }
         node *ch2 = newNode();
-        void *ch3 = ch1->child[N];
+        void *ch3 = ch1->childs[N];
         _key tmpKey[N + 1];
         void *tmpChild[N + 2];
         // copy of ch1
         memcpy(tmpKey, ch1->keys, sizeof(ch1->keys));
-        memcpy(tmpChild, ch1->child, sizeof(ch1->child));
+        memcpy(tmpChild, ch1->childs, sizeof(ch1->childs));
 
         // insert new key and record
         for (int j = N; j > i; j--) {
@@ -113,29 +107,33 @@ private:
         ch1->cnt = (N + 1) / 2;
         for (int j = 0; j < ch1->cnt; j++) {
             ch1->keys[j] = tmpKey[j];
-            ch1->child[j] = tmpChild[j];
+            ch1->childs[j] = tmpChild[j];
         }
         ch2->cnt = (N + 1) - ch1->cnt;
         for (int j = 0; j < ch2->cnt; j++) {
             ch2->keys[j] = tmpKey[j + ch1->cnt];
-            ch2->child[j] = tmpChild[j + ch1->cnt];
+            ch2->childs[j] = tmpChild[j + ch1->cnt];
         }
         // connect siblings ch1 -> ch2 -> ch3;
-        ch2->child[N] = ch3;
-        ch1->child[N] = (void *)ch2;
+        ch2->childs[N] = ch3;
+        ch1->childs[N] = (void *)ch2;
         return ch2;
     }
 
+    // insert node ptr at internal node
+    //
+    // if split happened return parent ptr
+    // else return nullptr
     node *_insertAtInternal(node *ch1, int i, const _key &key, node *ptr) {
         // insert at index i
         if (ch1->cnt < N) {  // node is not full
             ch1->cnt++;
             for (int j = ch1->cnt - 1; j > i; j--) {
                 ch1->keys[j] = ch1->keys[j - 1];
-                ch1->child[j + 1] = ch1->child[j];
+                ch1->childs[j + 1] = ch1->childs[j];
             }
             ch1->keys[i] = key;
-            ch1->child[i + 1] = ptr;
+            ch1->childs[i + 1] = ptr;
             return nullptr;
         }
         // node is full, need to split node into ch1 ch2
@@ -144,7 +142,7 @@ private:
         void *tmpChild[N + 2];
         // copy of ch1
         memcpy(tmpKey, ch1->keys, sizeof(ch1->keys));
-        memcpy(tmpChild, ch1->child, sizeof(ch1->child));
+        memcpy(tmpChild, ch1->childs, sizeof(ch1->childs));
 
         // insert new key and record
         for (int j = N; j > i; j--) {
@@ -161,35 +159,36 @@ private:
         ch1->cnt = (N + 1) / 2;
         for (int j = 0; j < ch1->cnt; j++) {
             ch1->keys[j] = tmpKey[j];
-            ch1->child[j + 1] = tmpChild[j + 1];
+            ch1->childs[j + 1] = tmpChild[j + 1];
         }
         ch2->cnt = (N + 1) - ch1->cnt - 1;
         for (int j = 0; j < ch2->cnt; j++) {
             ch2->keys[j] = tmpKey[j + ch1->cnt + 1];
-            ch2->child[j + 1] = tmpChild[j + ch1->cnt + 2];
+            ch2->childs[j + 1] = tmpChild[j + ch1->cnt + 2];
         }
 
         // parent node
         node *parent = newNode();
-        ch2->child[0] = ch2Child;
+        ch2->childs[0] = ch2Child;
         parent->cnt = 1;
         parent->keys[0] = parentKey;
-        parent->child[0] = ch1;
-        parent->child[1] = ch2;
+        parent->childs[0] = ch1;
+        parent->childs[1] = ch2;
         _updateHeight(ch1);
         _updateHeight(ch2);
         _updateHeight(parent);
         return parent;
     }
 
-    // helper
+    // recursively find insertion position
+    // handle new ptr from children if necessary
     node *_insertHelper(node *cur, const _key &key, _record *record) {
         // non-root leaf
         if (cur->height == 0) return _insertAtLeaf(cur, key, record);
         int i =
                 (int)(upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         i--;
-        node *p = _insertHelper((node *)cur->child[i + 1], key, record);
+        node *p = _insertHelper((node *)cur->childs[i + 1], key, record);
         if (!p) return nullptr;  // no need split further
         // insert to current node
         node *ret = _insertAtInternal(cur, i + 1, p->keys[0], p);
@@ -197,11 +196,11 @@ private:
     }
 
     // ch1 -> ch2 -> ch3
-    // ch1 and ch3 might be null
-    // -1: key not found ,no modification
-    // 0: deleted, no modification
-    // 1: borrow from ch1 2: borrow from ch3
-    // 3: merge ch2 into ch1 4: merge ch3 into ch2
+    // return status
+    // -1: key not found and no modification
+    // 0: ch2 is fine after deleting the key
+    // 1: borrow from ch1, 2: borrow from ch3
+    // 3: merge ch2 into ch1, 4: merge ch3 into ch2
     int _removeAtLeaf(node *ch1, node *ch2, node *ch3, const _key &key) {
         // delete at index i
         int i =
@@ -213,23 +212,23 @@ private:
         // remove the key
         for (int j = i; j < ch2->cnt - 1; j++) {
             ch2->keys[j] = ch2->keys[j + 1];
-            ch2->child[j] = ch2->child[j + 1];
+            ch2->childs[j] = ch2->childs[j + 1];
         }
         ch2->cnt--;
 
-        // case 1 node is still fine
+        // case 1 ch2 is still fine
         if (ch2->cnt >= (N + 1) / 2) return 0;
 
-        // case 2 borrow from sibings
+        // case 2 ch2 borrow from siblings
         // borrow from ch1
         if (ch1 && ch1->cnt > (N + 1) / 2) {
             ch2->cnt++;
             for (int j = ch2->cnt - 1; j > 0; j--) {
                 ch2->keys[j] = ch2->keys[j - 1];
-                ch2->child[j] = ch2->child[j - 1];
+                ch2->childs[j] = ch2->childs[j - 1];
             }
             ch2->keys[0] = ch1->keys[ch1->cnt - 1];
-            ch2->child[0] = ch1->child[ch1->cnt - 1];
+            ch2->childs[0] = ch1->childs[ch1->cnt - 1];
             ch1->cnt--;
             return 1;
         }
@@ -238,36 +237,36 @@ private:
         if (ch3 && ch3->cnt > (N + 1) / 2) {
             ch2->cnt++;
             ch2->keys[ch2->cnt - 1] = ch3->keys[0];
-            ch2->child[ch2->cnt - 1] = ch3->child[0];
+            ch2->childs[ch2->cnt - 1] = ch3->childs[0];
             for (int j = 0; j < ch3->cnt - 1; j++) {
                 ch3->keys[j] = ch3->keys[j + 1];
-                ch3->child[j] = ch3->child[j + 1];
+                ch3->childs[j] = ch3->childs[j + 1];
             }
             ch3->cnt--;
             return 2;
         }
 
         // case 3 cannot borrow
-        // merge into ch1
+        // merge ch2 into ch1
         if (ch1) {
             for (int j = 0; j < ch2->cnt; j++) {
                 ch1->cnt++;
                 ch1->keys[ch1->cnt - 1] = ch2->keys[j];
-                ch1->child[ch1->cnt - 1] = ch2->child[j];
+                ch1->childs[ch1->cnt - 1] = ch2->childs[j];
             }
-            ch1->child[N] = ch3;
+            ch1->childs[N] = ch3;
             deleteNode(ch2);
             return 3;
         }
 
-        // merge with ch3
+        // merge ch2 into ch3
         if (ch3) {
             for (int j = 0; j < ch3->cnt; j++) {
                 ch2->cnt++;
                 ch2->keys[ch2->cnt - 1] = ch3->keys[j];
-                ch2->child[ch2->cnt - 1] = ch3->child[j];
+                ch2->childs[ch2->cnt - 1] = ch3->childs[j];
             }
-            ch2->child[N] = ch3->child[N];
+            ch2->childs[N] = ch3->childs[N];
             deleteNode(ch3);
             return 4;
         }
@@ -279,52 +278,52 @@ private:
     //        key1   key2
     //         |      |
     // ch1 -> ch2 -> ch3
-    // ch1 and ch3 might be null
-    // 0: no need to modify further
-    // 1: borrow from ch1 2: borrow from ch3
-    // 3: merge ch2 into ch1 4: merge ch3 into ch2
+    // return status
+    // 0: ch2 is fine after deleting the key
+    // 1: zig at key1 2: zag at key2
+    // 3: merge ch2 into ch1, 4: merge ch3 into ch2
     int _removeAtInternal(node *ch1, _key &key1, node *ch2, _key &key2,
                           node *ch3, int i) {
         // remove the key
         for (int j = i; j < ch2->cnt - 1; j++) {
             ch2->keys[j] = ch2->keys[j + 1];
-            ch2->child[j + 1] = ch2->child[j + 2];
+            ch2->childs[j + 1] = ch2->childs[j + 2];
         }
         ch2->cnt--;
 
         // case 1 node is still fine
         if (ch2->cnt >= N / 2) return 0;
 
-        // case 2 borrow from sibings
+        // case 2 borrow from siblings
 
-        // borrow from ch1 (zig)
+        // zig
         if (ch1 && ch1->cnt > N / 2) {
             ch2->cnt += 1;
             for (int j = ch2->cnt - 1; j > 0; j--) {
                 ch2->keys[j] = ch2->keys[j - 1];
-                ch2->child[j + 1] = ch2->child[j];
+                ch2->childs[j + 1] = ch2->childs[j];
             }
-            ch2->child[1] = ch2->child[0];
+            ch2->childs[1] = ch2->childs[0];
 
             // left most pointer and borrowed key from parent
             ch2->keys[0] = key1;
-            ch2->child[0] = ch1->child[ch1->cnt];
+            ch2->childs[0] = ch1->childs[ch1->cnt];
             key1 = ch1->keys[ch1->cnt - 1];
 
             ch1->cnt--;
             return 0;
         }
 
-        // borrow from ch3 (zag)
+        // zag
         if (ch3 && ch3->cnt > N / 2) {
             ch2->cnt++;
             ch2->keys[ch2->cnt - 1] = key2;
-            ch2->child[ch2->cnt] = ch3->child[0];
+            ch2->childs[ch2->cnt] = ch3->childs[0];
             key2 = ch3->keys[0];
-            ch3->child[0] = ch3->child[1];
+            ch3->childs[0] = ch3->childs[1];
             for (int j = 0; j < ch3->cnt - 1; j++) {
                 ch3->keys[j] = ch3->keys[j + 1];
-                ch3->child[j + 1] = ch3->child[j + 2];
+                ch3->childs[j + 1] = ch3->childs[j + 2];
             }
             ch3->cnt--;
             return 0;
@@ -336,11 +335,11 @@ private:
         if (ch1) {
             ch1->cnt++;
             ch1->keys[ch1->cnt - 1] = key1;
-            ch1->child[ch1->cnt] = ch2->child[0];
+            ch1->childs[ch1->cnt] = ch2->childs[0];
             for (int j = 0; j < ch2->cnt; j++) {
                 ch1->cnt++;
                 ch1->keys[ch1->cnt - 1] = ch2->keys[j];
-                ch1->child[ch1->cnt] = ch2->child[j + 1];
+                ch1->childs[ch1->cnt] = ch2->childs[j + 1];
             }
             deleteNode(ch2);
             return 3;
@@ -350,25 +349,20 @@ private:
         if (ch3) {
             ch2->cnt++;
             ch2->keys[ch2->cnt - 1] = key2;
-            ch2->child[ch2->cnt] = ch3->child[0];
+            ch2->childs[ch2->cnt] = ch3->childs[0];
             for (int j = 0; j < ch3->cnt; j++) {
                 ch2->cnt++;
                 ch2->keys[ch2->cnt - 1] = ch3->keys[j];
-                ch2->child[ch2->cnt] = ch3->child[j + 1];
+                ch2->childs[ch2->cnt] = ch3->childs[j + 1];
             }
             deleteNode(ch3);
             return 4;
         }
 
         // only happens at root
-        // TODO
-
         return 0;
     }
 
-    // 0: no modification
-    // 1: borrow from ch1 2: borrow from ch3
-    // 3: merge ch2 into ch1 4: merge ch3 into ch2
     int _removeHelper(node *ch1, _key &key1, node *ch2, _key &key2, node *ch3,
                       const _key &key) {
         // leaf node
@@ -380,11 +374,11 @@ private:
                 (int)(lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
         if (i == ch2->cnt || key < ch2->keys[i]) i--;
         _key dumpKey = _key();
-        node *_ch1 = (i == -1 ? nullptr : (node *)ch2->child[i]);
+        node *_ch1 = (i == -1 ? nullptr : (node *)ch2->childs[i]);
         _key &_key1 = (i == -1 ? dumpKey : ch2->keys[i]);
-        node *_ch2 = (node *)ch2->child[i + 1];
+        node *_ch2 = (node *)ch2->childs[i + 1];
         _key &_key2 = (i == ch2->cnt - 1 ? dumpKey : ch2->keys[i + 1] );
-        node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *)ch2->child[i + 2]);
+        node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *)ch2->childs[i + 2]);
         int status = _removeHelper(_ch1, _key1, _ch2, _key2, _ch3, key);
         if (status == 0 || status == -1)
             return status;
@@ -411,14 +405,14 @@ public:
 
         p->cnt = 0;
         p->height = 0;
-        memset(p->child, 0, sizeof 0);
+        memset(p->childs, 0, sizeof 0);
         return p;
     }
     // only for single node
     static void deleteNodeGlobal(node *p) {
         // TODO: use disk pool
         globalNodeCnt--;
-        memset(p->child, 0, sizeof(p->child));
+        memset(p->childs, 0, sizeof(p->childs));
         delete p;
     }
     // for debugging
@@ -434,7 +428,7 @@ public:
                 cout << (*frt);
                 if (frt->height == 0) continue;
                 for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *)frt->child[j]);
+                    q.push((node *)frt->childs[j]);
                     nxt++;
                 }
             }
@@ -453,6 +447,17 @@ public:
 
     int size() const { return nodeCnt; }
 
+    // search lower_bound according to key (the first record_key >= key)
+    pair<node *, int> lower_bound(node *cur, const _key &key) const {
+        int i =
+                (int)(lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
+        // leaf node
+        if (cur->height == 0) return pair<node *, int>(cur, i);
+        // non leaf
+        if (i >= cur->cnt || key < cur->keys[i]) i--;
+        return lower_bound((node *) cur->childs[i + 1], key);
+    }
+
     // if key already exists, insert to upper bound
     void insert(const _key &key, _record *record) {
         node *p;
@@ -462,8 +467,8 @@ public:
                 node *newRt = newNode();
                 newRt->cnt = 1;
                 newRt->keys[0] = p->keys[0];
-                newRt->child[0] = root;
-                newRt->child[1] = p;
+                newRt->childs[0] = root;
+                newRt->childs[1] = p;
                 _updateHeight(newRt);
                 root = newRt;
             }
@@ -482,24 +487,24 @@ public:
         int status = _removeHelper(nullptr, dump, root, dump, nullptr, key);
         if (root->cnt == 0) {
             node *p = root;
-            root = (node *)root->child[0];
+            root = (node *)root->childs[0];
             deleteNode(p);
         }
     }
 
     // query single key, nullptr if doesn't exist
     _record *query(const _key *key) const {
-        pair<node *, int> q = _searchNode(root, key);
+        pair<node *, int> q = lower_bound(root, key);
         node *p = q.first;
         int i = q.second;
         if (i == p->cnt || p->keys[i] != key) return nullptr;
-        return (_record *)p->child[i];
+        return (_record *)p->childs[i];
     }
 
     // query [lo, hi)
     vector<_record *> query(const _key &lo, const _key &hi) const {
         assert(lo < hi);
-        pair<node *, int> q = _searchNode(root, lo);
+        pair<node *, int> q = lower_bound(root, lo);
         node *p = q.first;
         int i = q.second;
 
@@ -507,9 +512,9 @@ public:
 
         while (p && p->keys[i] < hi) {
             for (; i < p->cnt; i++) {
-                ret.push_back((_record *)p->child[i]);
+                ret.push_back((_record *)p->childs[i]);
             }
-            p = (node *)p->child[N];
+            p = (node *)p->childs[N];
             i = 0;
         }
         return ret;
