@@ -5,7 +5,7 @@
 
 using namespace std;
 
-template <typename _key, typename _record, int N>
+template<typename _key, typename _record, int N>
 class BPTree {
 private:
     // keys, childs, cnt, height are on disk
@@ -24,6 +24,7 @@ private:
             os << "| ";
             return os;
         }
+
         // for debugging
         friend string to_string(const node &n) {
             string ret;
@@ -36,6 +37,7 @@ private:
             return ret;
         }
     };
+
     // global cnt for node
     static int globalNodeCnt;
 
@@ -59,10 +61,10 @@ private:
 
     // for non leaf node
     void _updateHeight(node *cur) {
-        node *ch = (node *)cur->childs[0];
+        node *ch = (node *) cur->childs[0];
         int mx = ch->height;
         for (int i = 0; i < cur->cnt; i++) {
-            ch = (node *)cur->childs[i + 1];
+            ch = (node *) cur->childs[i + 1];
             mx = max(mx, ch->height);
         }
         cur->height = mx + 1;
@@ -75,7 +77,7 @@ private:
     node *_insertAtLeaf(node *ch1, const _key &key, _record *record) {
         // insert at index i
         int i =
-                (int)(upper_bound(ch1->keys, ch1->keys + ch1->cnt, key) - ch1->keys);
+                (int) (upper_bound(ch1->keys, ch1->keys + ch1->cnt, key) - ch1->keys);
         if (ch1->cnt < N) {  // leaf is not full
             ch1->cnt++;
             for (int j = ch1->cnt - 1; j > i; j--) {
@@ -83,7 +85,7 @@ private:
                 ch1->childs[j] = ch1->childs[j - 1];
             }
             ch1->keys[i] = key;
-            ch1->childs[i] = (void *)record;
+            ch1->childs[i] = (void *) record;
             // no split
             return nullptr;
         }
@@ -101,7 +103,7 @@ private:
             tmpChild[j] = tmpChild[j - 1];
         }
         tmpKey[i] = key;
-        tmpChild[i] = (void *)record;
+        tmpChild[i] = (void *) record;
 
         // write to ch1 and ch2
         ch1->cnt = (N + 1) / 2;
@@ -116,7 +118,7 @@ private:
         }
         // connect siblings ch1 -> ch2 -> ch3;
         ch2->childs[N] = ch3;
-        ch1->childs[N] = (void *)ch2;
+        ch1->childs[N] = (void *) ch2;
         return ch2;
     }
 
@@ -150,7 +152,7 @@ private:
             tmpChild[j + 1] = tmpChild[j];
         }
         tmpKey[i] = key;
-        tmpChild[i + 1] = (void *)ptr;
+        tmpChild[i + 1] = (void *) ptr;
 
         // took the (N + 1)/2 th key and pointer
         _key parentKey = tmpKey[(N + 1) / 2];
@@ -186,9 +188,9 @@ private:
         // non-root leaf
         if (cur->height == 0) return _insertAtLeaf(cur, key, record);
         int i =
-                (int)(upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
+                (int) (upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         i--;
-        node *p = _insertHelper((node *)cur->childs[i + 1], key, record);
+        node *p = _insertHelper((node *) cur->childs[i + 1], key, record);
         if (!p) return nullptr;  // no need split further
         // insert to current node
         node *ret = _insertAtInternal(cur, i + 1, p->keys[0], p);
@@ -199,12 +201,11 @@ private:
     // return status
     // -1: key not found and no modification
     // 0: ch2 is fine after deleting the key
-    // 1: borrow from ch1, 2: borrow from ch3
-    // 3: merge ch2 into ch1, 4: merge ch3 into ch2
-    int _removeAtLeaf(node *ch1, node *ch2, node *ch3, const _key &key) {
+    // 1: merge ch2 into ch1, 2: merge ch3 into ch2
+    int _removeAtLeaf(node *ch1, _key *pKey1, node *ch2, _key *pKey2, node *ch3, const _key &key) {
         // delete at index i
         int i =
-                (int)(lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
+                (int) (lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
 
         // didn't find key
         if (i == ch2->cnt || ch2->keys[i] != key) return -1;
@@ -230,7 +231,8 @@ private:
             ch2->keys[0] = ch1->keys[ch1->cnt - 1];
             ch2->childs[0] = ch1->childs[ch1->cnt - 1];
             ch1->cnt--;
-            return 1;
+            *pKey1 = ch2->keys[0];
+            return 0;
         }
 
         // borrow from ch3
@@ -243,7 +245,8 @@ private:
                 ch3->childs[j] = ch3->childs[j + 1];
             }
             ch3->cnt--;
-            return 2;
+            *pKey2 = ch3->keys[0];
+            return 0;
         }
 
         // case 3 cannot borrow
@@ -256,7 +259,7 @@ private:
             }
             ch1->childs[N] = ch3;
             deleteNode(ch2);
-            return 3;
+            return 1;
         }
 
         // merge ch2 into ch3
@@ -268,7 +271,7 @@ private:
             }
             ch2->childs[N] = ch3->childs[N];
             deleteNode(ch3);
-            return 4;
+            return 2;
         }
 
         // only happens at root
@@ -280,9 +283,8 @@ private:
     // ch1 -> ch2 -> ch3
     // return status
     // 0: ch2 is fine after deleting the key
-    // 1: zig at key1 2: zag at key2
-    // 3: merge ch2 into ch1, 4: merge ch3 into ch2
-    int _removeAtInternal(node *ch1, _key &key1, node *ch2, _key &key2,
+    // 1: merge ch2 into ch1, 2: merge ch3 into ch2
+    int _removeAtInternal(node *ch1, _key *pKey1, node *ch2, _key *pKey2,
                           node *ch3, int i) {
         // remove the key
         for (int j = i; j < ch2->cnt - 1; j++) {
@@ -306,9 +308,9 @@ private:
             ch2->childs[1] = ch2->childs[0];
 
             // left most pointer and borrowed key from parent
-            ch2->keys[0] = key1;
+            ch2->keys[0] = *pKey1;
             ch2->childs[0] = ch1->childs[ch1->cnt];
-            key1 = ch1->keys[ch1->cnt - 1];
+            *pKey1 = ch1->keys[ch1->cnt - 1];
 
             ch1->cnt--;
             return 0;
@@ -317,9 +319,9 @@ private:
         // zag
         if (ch3 && ch3->cnt > N / 2) {
             ch2->cnt++;
-            ch2->keys[ch2->cnt - 1] = key2;
+            ch2->keys[ch2->cnt - 1] = *pKey2;
             ch2->childs[ch2->cnt] = ch3->childs[0];
-            key2 = ch3->keys[0];
+            *pKey2 = ch3->keys[0];
             ch3->childs[0] = ch3->childs[1];
             for (int j = 0; j < ch3->cnt - 1; j++) {
                 ch3->keys[j] = ch3->keys[j + 1];
@@ -334,7 +336,7 @@ private:
         // merge ch2 into ch1
         if (ch1) {
             ch1->cnt++;
-            ch1->keys[ch1->cnt - 1] = key1;
+            ch1->keys[ch1->cnt - 1] = *pKey1;
             ch1->childs[ch1->cnt] = ch2->childs[0];
             for (int j = 0; j < ch2->cnt; j++) {
                 ch1->cnt++;
@@ -342,13 +344,13 @@ private:
                 ch1->childs[ch1->cnt] = ch2->childs[j + 1];
             }
             deleteNode(ch2);
-            return 3;
+            return 1;
         }
 
         // merge ch3 into ch2
         if (ch3) {
             ch2->cnt++;
-            ch2->keys[ch2->cnt - 1] = key2;
+            ch2->keys[ch2->cnt - 1] = *pKey2;
             ch2->childs[ch2->cnt] = ch3->childs[0];
             for (int j = 0; j < ch3->cnt; j++) {
                 ch2->cnt++;
@@ -356,49 +358,50 @@ private:
                 ch2->childs[ch2->cnt] = ch3->childs[j + 1];
             }
             deleteNode(ch3);
-            return 4;
+            return 2;
         }
 
         // only happens at root
         return 0;
     }
 
-    int _removeHelper(node *ch1, _key &key1, node *ch2, _key &key2, node *ch3,
+    int _removeHelper(node *ch1, _key *pKey1, node *ch2, _key *pKey2, node *ch3,
                       const _key &key) {
         // leaf node
-        if (ch2->height == 0) {
-            int status = _removeAtLeaf(ch1, ch2, ch3, key);
-            return status;
-        }
-        int i =
-                (int)(lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
+        if (ch2->height == 0) return _removeAtLeaf(ch1, pKey1, ch2, pKey2, ch3, key);
+        // internal node
+        int i = (int) (lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
         if (i == ch2->cnt || key < ch2->keys[i]) i--;
-        _key dumpKey = _key();
-        node *_ch1 = (i == -1 ? nullptr : (node *)ch2->childs[i]);
-        _key &_key1 = (i == -1 ? dumpKey : ch2->keys[i]);
-        node *_ch2 = (node *)ch2->childs[i + 1];
-        _key &_key2 = (i == ch2->cnt - 1 ? dumpKey : ch2->keys[i + 1] );
-        node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *)ch2->childs[i + 2]);
-        int status = _removeHelper(_ch1, _key1, _ch2, _key2, _ch3, key);
+        node *_ch1 = (i == -1 ? nullptr : (node *) ch2->childs[i]);
+        _key *_pKey1 = (i == -1 ? nullptr : &ch2->keys[i]);
+        node *_ch2 = (node *) ch2->childs[i + 1];
+        _key *_pKey2 = (i == ch2->cnt - 1 ? nullptr : &ch2->keys[i + 1]);
+        node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *) ch2->childs[i + 2]);
+        int status = _removeHelper(_ch1, _pKey1, _ch2, _pKey2, _ch3, key);
         if (status == 0 || status == -1)
             return status;
-        else if (status == 1) {
-            ch2->keys[i] = _ch2->keys[0];
-            return 0;
-        } else if (status == 2) {
-            ch2->keys[i + 1] = _ch3->keys[0];
-            return 0;
-        } else if (status == 3) {
-            return _removeAtInternal(ch1, key1, ch2, key2, ch3, i);
-        } else if (status == 4) {
-            return _removeAtInternal(ch1, key1, ch2, key2, ch3, i + 1);
-        }
+        else if (status == 1) // merged ch2 -> ch1, delete key at i
+            return _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
+        else if (status == 2) // merged ch3 -> ch2, delete key at i + 1
+            return _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
         // should never reach here
         throw runtime_error("In _removeAtInternal: should never reach here");
     }
 
+    void _delete(node *cur) {
+        if (cur->height == 0) {
+            deleteNode(cur);
+            return;
+        }
+        _delete((node *) cur->childs[0]);
+        for (int i = 0; i < cur->cnt; i++)
+            _delete((node *) cur->childs[i + 1]);
+        deleteNode(cur);
+    }
+
 public:
-    static int globalSize() { return globalNodeCnt; }
+    static int globalNodeSize() { return globalNodeCnt; }
+
     static node *newNodeGlobal() {
         // TODO: use disk pool
         node *p = new node();
@@ -408,6 +411,7 @@ public:
         memset(p->childs, 0, sizeof 0);
         return p;
     }
+
     // only for single node
     static void deleteNodeGlobal(node *p) {
         // TODO: use disk pool
@@ -415,6 +419,7 @@ public:
         memset(p->childs, 0, sizeof(p->childs));
         delete p;
     }
+
     // for debugging
     void levelTraverse() const {
         queue<node *> q;
@@ -428,7 +433,7 @@ public:
                 cout << (*frt);
                 if (frt->height == 0) continue;
                 for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *)frt->childs[j]);
+                    q.push((node *) frt->childs[j]);
                     nxt++;
                 }
             }
@@ -437,32 +442,33 @@ public:
         }
     }
 
-    BPTree() : root{newNode()}, nodeCnt{0} {}
+    BPTree() : root{newNode()}, nodeCnt{0}, recordCnt{0} {}
 
     ~BPTree() {
-        // TODO
+        _delete(root);
     }
 
     int height() const { return root->height; }
 
-    int size() const { return nodeCnt; }
+    int size() const { return recordCnt; }
+
+    int nodeSize() const { return nodeCnt; }
 
     // search lower_bound according to key (the first record_key >= key)
-    pair<node *, int> lower_bound(node *cur, const _key &key) const {
+    pair<node *, int> _lower_bound(node *cur, const _key &key) const {
         int i =
-                (int)(lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
+                (int) (lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         // leaf node
         if (cur->height == 0) return pair<node *, int>(cur, i);
         // non leaf
         if (i >= cur->cnt || key < cur->keys[i]) i--;
-        return lower_bound((node *) cur->childs[i + 1], key);
+        return _lower_bound((node *) cur->childs[i + 1], key);
     }
 
     // if key already exists, insert to upper bound
     void insert(const _key &key, _record *record) {
-        node *p;
         if (root->height == 0) {  // root is leaf
-            p = _insertAtLeaf(root, key, record);
+            node *p = _insertAtLeaf(root, key, record);
             if (p) {  // root is splited
                 node *newRt = newNode();
                 newRt->cnt = 1;
@@ -472,33 +478,36 @@ public:
                 _updateHeight(newRt);
                 root = newRt;
             }
-            return;
+        } else {
+            node *p = _insertHelper(root, key, record);  // root is split
+            if (p) root = p;
         }
-        p = _insertHelper(root, key, record);  // root is splited
-        if (p) root = p;
     }
 
-    void remove(const _key &key) {
+    bool remove(const _key &key) {
         if (root->height == 0) {
-            _removeAtLeaf(nullptr, root, nullptr, key);
-            return;
-        }
-        _key dump = _key();
-        int status = _removeHelper(nullptr, dump, root, dump, nullptr, key);
-        if (root->cnt == 0) {
-            node *p = root;
-            root = (node *)root->childs[0];
-            deleteNode(p);
+            int status = _removeAtLeaf(nullptr, nullptr, root, nullptr, nullptr, key);
+            if (status != -1) recordCnt--;
+            return status != -1;
+        } else {
+            int status = _removeHelper(nullptr, nullptr, root, nullptr, nullptr, key);
+            if (root->cnt == 0) {
+                node *p = root;
+                root = (node *) root->childs[0];
+                deleteNode(p);
+            }
+            if(status != -1) recordCnt--;
+            return status != -1;
         }
     }
 
-    // query single key, nullptr if doesn't exist
+    // query single key, return nullptr if not exist
     _record *query(const _key *key) const {
         pair<node *, int> q = lower_bound(root, key);
         node *p = q.first;
         int i = q.second;
         if (i == p->cnt || p->keys[i] != key) return nullptr;
-        return (_record *)p->childs[i];
+        return (_record *) p->childs[i];
     }
 
     // query [lo, hi)
@@ -512,23 +521,16 @@ public:
 
         while (p && p->keys[i] < hi) {
             for (; i < p->cnt; i++) {
-                ret.push_back((_record *)p->childs[i]);
+                ret.push_back((_record *) p->childs[i]);
             }
-            p = (node *)p->childs[N];
+            p = (node *) p->childs[N];
             i = 0;
         }
         return ret;
     }
 };
 
-template <typename _key, typename _record, int N>
+template<typename _key, typename _record, int N>
 int BPTree<_key, _record, N>::globalNodeCnt = 0;
-
-void test1();
-void test2();
-void test3();
-void test4();
-void test5();
-void test6();
 
 #endif //BPTREE_BPTREE_H
