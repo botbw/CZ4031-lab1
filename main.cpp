@@ -1,7 +1,8 @@
 #include <iostream>
 #include "BPTree.h"
 
-typedef BPTree<int, int, 3> tree;
+using tree= BPTree<int, int, 3>;
+using node = tree::node;
 
 void test1() {  // insertion in tut
     tree tr;
@@ -86,12 +87,36 @@ void test6() {  // delete 4 in lec
     cout << endl << endl << endl;
 }
 
+void randomTest() {
+    tree tr;
+    vector<int> a;
+    //16
+    for (int i = 0; i < 10000; i++) {
+        int num = random() % 10000;
+        tr.insert(num, nullptr);
+    }
+    auto tmp = tr.lower_bound(-1);
+    int i = tmp.second;
+    tree::node *p = tmp.first;
+    while(p) {
+        for(; i < p->cnt; i++) {
+            a.push_back(p->keys[i]);
+        }
+        p = (tree::node*)p->childs[3];
+        i = 0;
+    }
+    cout << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << endl;
+}
+
+
 int main() {
+    // insert 中pointer有多个internal 指向一个leaf
 //    test1();
 //    test2();
 //    test3();
 //    test4();
 //    test5();
 //    test6();
+randomTest();
     return 0;
 }

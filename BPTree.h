@@ -5,9 +5,11 @@
 
 using namespace std;
 
+
+
 template<typename _key, typename _record, int N>
 class BPTree {
-private:
+public:
     // keys, childs, cnt, height are on disk
     struct node {
         _key keys[N];
@@ -38,6 +40,7 @@ private:
         }
     };
 
+public:
     // global cnt for node
     static int globalNodeCnt;
 
@@ -126,7 +129,7 @@ private:
     //
     // if split happened return parent ptr
     // else return nullptr
-    node *_insertAtInternal(node *ch1, int i, const _key &key, node *ptr) {
+    void _insertAtInternal(node *&ch1, int i, const _key &key, node *ptr) {
         // insert at index i
         if (ch1->cnt < N) {  // node is not full
             ch1->cnt++;
@@ -136,42 +139,44 @@ private:
             }
             ch1->keys[i] = key;
             ch1->childs[i + 1] = ptr;
-            return nullptr;
+            return;
         }
         // node is full, need to split node into ch1 ch2
         node *ch2 = newNode();
         _key tmpKey[N + 1];
-        void *tmpChild[N + 2];
+        void *tmpChilds[N + 2];
         // copy of ch1
         memcpy(tmpKey, ch1->keys, sizeof(ch1->keys));
-        memcpy(tmpChild, ch1->childs, sizeof(ch1->childs));
+        memcpy(tmpChilds, ch1->childs, sizeof(ch1->childs));
 
         // insert new key and record
         for (int j = N; j > i; j--) {
             tmpKey[j] = tmpKey[j - 1];
-            tmpChild[j + 1] = tmpChild[j];
+            tmpChilds[j + 1] = tmpChilds[j];
         }
         tmpKey[i] = key;
-        tmpChild[i + 1] = (void *) ptr;
+        tmpChilds[i + 1] = (void *) ptr;
 
         // took the (N + 1)/2 th key and pointer
         _key parentKey = tmpKey[(N + 1) / 2];
-        void *ch2Child = tmpChild[(N + 1) / 2 + 1];
+        void *ch2Child = tmpChilds[(N + 1) / 2 + 1];
+
         // write to ch1 and ch2
         ch1->cnt = (N + 1) / 2;
+        ch1->childs[0] = tmpChilds[0];
         for (int j = 0; j < ch1->cnt; j++) {
             ch1->keys[j] = tmpKey[j];
-            ch1->childs[j + 1] = tmpChild[j + 1];
+            ch1->childs[j + 1] = tmpChilds[j + 1];
         }
         ch2->cnt = (N + 1) - ch1->cnt - 1;
+        ch2->childs[0] = ch2Child;
         for (int j = 0; j < ch2->cnt; j++) {
-            ch2->keys[j] = tmpKey[j + ch1->cnt + 1];
-            ch2->childs[j + 1] = tmpChild[j + ch1->cnt + 2];
+            ch2->keys[j] = tmpKey[(N + 1) / 2 + 1 + j];
+            ch2->childs[j + 1] = tmpChilds[j + (N + 1) / 2 + 1 + j + 1];
         }
 
         // parent node
         node *parent = newNode();
-        ch2->childs[0] = ch2Child;
         parent->cnt = 1;
         parent->keys[0] = parentKey;
         parent->childs[0] = ch1;
@@ -179,22 +184,24 @@ private:
         _updateHeight(ch1);
         _updateHeight(ch2);
         _updateHeight(parent);
-        return parent;
+        ch1 = parent;
     }
 
     // recursively find insertion position
     // handle new ptr from children if necessary
-    node *_insertHelper(node *cur, const _key &key, _record *record) {
+    node *_insertHelper(node* &cur, const _key &key, _record *record) {
         // non-root leaf
         if (cur->height == 0) return _insertAtLeaf(cur, key, record);
         int i =
                 (int) (upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         i--;
-        node *p = _insertHelper((node *) cur->childs[i + 1], key, record);
+        node *value = (node*) (cur->childs[i + 1]);
+        node *p = _insertHelper(value, key, record);
+        cur->childs[i + 1] = value;
         if (!p) return nullptr;  // no need split further
         // insert to current node
-        node *ret = _insertAtInternal(cur, i + 1, p->keys[0], p);
-        return ret;
+        _insertAtInternal(cur, i + 1, p->keys[0], p);
+        return nullptr;
     }
 
     // ch1 -> ch2 -> ch3
@@ -205,7 +212,7 @@ private:
     int _removeAtLeaf(node *ch1, _key *pKey1, node *ch2, _key *pKey2, node *ch3, const _key &key) {
         // delete at index i
         int i =
-                (int) (lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
+                (int) (std::lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
 
         // didn't find key
         if (i == ch2->cnt || ch2->keys[i] != key) return -1;
@@ -370,7 +377,7 @@ private:
         // leaf node
         if (ch2->height == 0) return _removeAtLeaf(ch1, pKey1, ch2, pKey2, ch3, key);
         // internal node
-        int i = (int) (lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
+        int i = (int) (std::lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
         if (i == ch2->cnt || key < ch2->keys[i]) i--;
         node *_ch1 = (i == -1 ? nullptr : (node *) ch2->childs[i]);
         _key *_pKey1 = (i == -1 ? nullptr : &ch2->keys[i]);
@@ -388,15 +395,26 @@ private:
         throw runtime_error("In _removeAtInternal: should never reach here");
     }
 
-    void _delete(node *cur) {
+    void _destruct(node *cur) {
         if (cur->height == 0) {
             deleteNode(cur);
             return;
         }
-        _delete((node *) cur->childs[0]);
+//        _destruct((node *) cur->childs[0]);
         for (int i = 0; i < cur->cnt; i++)
-            _delete((node *) cur->childs[i + 1]);
+            _destruct((node *) cur->childs[i + 1]);
         deleteNode(cur);
+    }
+
+    // search lower_bound according to key (the first record_key >= key)
+    pair<node *, int> _lower_bound(node *cur, const _key &key) const {
+        int i =
+                (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
+        // leaf node
+        if (cur->height == 0) return pair<node *, int>(cur, i);
+        // non leaf
+        if (i >= cur->cnt || key < cur->keys[i]) i--;
+        return _lower_bound((node *) cur->childs[i + 1], key);
     }
 
 public:
@@ -416,10 +434,31 @@ public:
     static void deleteNodeGlobal(node *p) {
         // TODO: use disk pool
         globalNodeCnt--;
-        memset(p->childs, 0, sizeof(p->childs));
+        memset(p->childs, 0x3f, sizeof(p->childs));
         delete p;
     }
 
+    // for debugging
+    void levelTraverse(node *cur) const {
+        queue<node *> q;
+        q.push(cur);
+        int sz = 1;
+        while (q.size()) {
+            int nxt = 0;
+            for (int i = 1; i <= sz; i++) {
+                node *frt = q.front();
+                q.pop();
+                cout << *frt;
+                if (frt->height == 0) continue;
+                for (int j = 0; j <= frt->cnt; j++) {
+                    q.push((node *) frt->childs[j]);
+                    nxt++;
+                }
+            }
+            cout << endl;
+            sz = nxt;
+        }
+    }
     // for debugging
     void levelTraverse() const {
         queue<node *> q;
@@ -430,7 +469,7 @@ public:
             for (int i = 1; i <= sz; i++) {
                 node *frt = q.front();
                 q.pop();
-                cout << (*frt);
+                cout << *frt;
                 if (frt->height == 0) continue;
                 for (int j = 0; j <= frt->cnt; j++) {
                     q.push((node *) frt->childs[j]);
@@ -445,7 +484,7 @@ public:
     BPTree() : root{newNode()}, nodeCnt{0}, recordCnt{0} {}
 
     ~BPTree() {
-        _delete(root);
+        _destruct(root);
     }
 
     int height() const { return root->height; }
@@ -454,19 +493,13 @@ public:
 
     int nodeSize() const { return nodeCnt; }
 
-    // search lower_bound according to key (the first record_key >= key)
-    pair<node *, int> _lower_bound(node *cur, const _key &key) const {
-        int i =
-                (int) (lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
-        // leaf node
-        if (cur->height == 0) return pair<node *, int>(cur, i);
-        // non leaf
-        if (i >= cur->cnt || key < cur->keys[i]) i--;
-        return _lower_bound((node *) cur->childs[i + 1], key);
+    pair<node*, int> lower_bound(const _key &key) const {
+        return _lower_bound(root, key);
     }
 
     // if key already exists, insert to upper bound
     void insert(const _key &key, _record *record) {
+        recordCnt++;
         if (root->height == 0) {  // root is leaf
             node *p = _insertAtLeaf(root, key, record);
             if (p) {  // root is splited
