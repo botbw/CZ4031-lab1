@@ -90,10 +90,12 @@ void test6() {  // delete 4 in lec
 void randomTest() {
     tree tr;
     vector<int> a;
+    multiset<int> s;
     //16
     for (int i = 0; i < 10000; i++) {
-        int num = random() % 10000;
+        int num = rand() % 10000;
         tr.insert(num, nullptr);
+        s.insert(num);
     }
     auto tmp = tr.lower_bound(-1);
     int i = tmp.second;
@@ -105,7 +107,32 @@ void randomTest() {
         p = (tree::node*)p->childs[3];
         i = 0;
     }
-    cout << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << endl;
+    assert(is_sorted(a.begin(), a.end()));
+    cout << "after some insertions" << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << endl;
+
+    for (int i = 0; i < 10000; i++) {
+        int id = rand() % ((int) a.size());
+        bool deleted = tr.remove(a[id]);
+        bool _deleted = s.contains(a[id]);
+        cout << deleted << "-" << _deleted << endl;
+        assert(deleted == _deleted);
+
+        if(deleted == true) s.erase(s.find(a[id]));
+    }
+}
+
+void deleteTest() {
+    tree tr;
+    for(int i = 1; i <= 10; i++) {
+        tr.insert(1, nullptr);
+    }
+    tr.levelTraverse();
+
+    for(int i = 1; i <= 10; i++) {
+        tr.remove(1);
+        cout << i << ": \n";
+        tr.levelTraverse();
+    }
 }
 
 
@@ -117,6 +144,8 @@ int main() {
 //    test4();
 //    test5();
 //    test6();
+//deleteTest();
+
 randomTest();
     return 0;
 }

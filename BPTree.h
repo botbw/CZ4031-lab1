@@ -500,20 +500,15 @@ public:
     // if key already exists, insert to upper bound
     void insert(const _key &key, _record *record) {
         recordCnt++;
-        if (root->height == 0) {  // root is leaf
-            node *p = _insertAtLeaf(root, key, record);
-            if (p) {  // root is splited
-                node *newRt = newNode();
-                newRt->cnt = 1;
-                newRt->keys[0] = p->keys[0];
-                newRt->childs[0] = root;
-                newRt->childs[1] = p;
-                _updateHeight(newRt);
-                root = newRt;
-            }
-        } else {
-            node *p = _insertHelper(root, key, record);  // root is split
-            if (p) root = p;
+        node *p = _insertHelper(root, key, record);
+        if(p) { // root is leaf and split
+            node *newRt = newNode();
+            newRt->cnt = 1;
+            newRt->keys[0] = p->keys[0];
+            newRt->childs[0] = root;
+            newRt->childs[1] = p;
+            _updateHeight(newRt);
+            root = newRt;
         }
     }
 
