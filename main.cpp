@@ -92,9 +92,11 @@ void randomTest() {
     vector<int> a, b;
     multiset<int> s;
     //16
-    int n = 1000000;
+//    srand(time(NULL));
+    int n = 500;
     for (int i = 1; i <= n; i++) {
         int num = rand() % 10000;
+//        num = 1;
         tr.insert(num, nullptr);
         b.push_back(num);
         s.insert(num);
@@ -117,46 +119,37 @@ void randomTest() {
     assert(a == b);
 
     cout << "after " << n << " insertions the leaves are " << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << " height:" << tr.height() << endl;
-
-    return;
+    tr.levelTraverse();
+//    return;
     for (int i = 1; i <= n; i++) {
         int id = rand() % ((int) a.size());
         bool deleted = tr.remove(a[id]);
         bool _deleted = s.contains(a[id]);
-        assert(deleted == _deleted);
-        if(deleted == true) s.erase(s.find(a[id]));
+        if(deleted != _deleted) {
+            cout << a[id] << endl;
+            tr.levelTraverse();
+            return;
+        }
+        if(_deleted == true) s.erase(s.find(a[id]));
     }
+    cout << "pass\n";
 }
 
 void deleteTest() {
     tree tr;
     int n = 15;
-    for(int i = 1; i <= n; i++) {
+    for (int i = 1; i <= n; i++) {
         tr.insert(1, nullptr);
     }
     tr.levelTraverse();
     cout << endl << endl;
-    tr.printLeaves();
-    cout << endl;
 
-    for(int i = 1; i <= n; i++) {
-        if(i == 8) {
-            cout << "here\n";
-        }
+    for (int i = 1; i <= n; i++) {
         tr.remove(1);
         cout << i << ": " << endl;
         tr.levelTraverse();
-        tr.dfs();
         cout << endl;
-
     }
-}
-
-void insertTest() {
-    tree tr;
-    int n = 1000;
-    for(int i = 1; i <= n; i++) tr.insert(i, nullptr);
-    tr.levelTraverse();
 }
 
 

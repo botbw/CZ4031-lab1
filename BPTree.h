@@ -139,6 +139,8 @@ public:
             }
             ch1->keys[i] = key;
             ch1->childs[i + 1] = ptr;
+
+            _updateHeight(ch1);
             return nullptr;
         }
         // node is full, need to split node into ch1 ch2
@@ -194,21 +196,15 @@ public:
         node *newCh = _insertHelper(ch, key, record);
         // insert to current node if leaf is split
         node *ret = nullptr;
-        if(newCh) { // tree structure is modified
-            if (newCh->height == 0) { // child is leaf split
-                ret = _insertAtInternal(cur, i + 1, newCh->keys[0], newCh);
-            } else { // child is internal split
-                node *p = newCh;
-                while (p->height != 0) p = (node *) p->childs[0];
-                ret = _insertAtInternal(cur, i + 1, p->keys[0], newCh);
-            }
-        }
-        if(i >= 0) {
+        if(newCh) { // new child is created
+            node *p = newCh;
+            while (p->height != 0) p = (node *) p->childs[0];
+            ret = _insertAtInternal(cur, i + 1, p->keys[0], newCh);
+        } else if (i >= 0) {
             node *p = ch;
             while(p->height != 0) p = (node*) p->childs[0];
             cur->keys[i] = p->keys[0];
         }
-        _updateHeight(cur);
         return ret;
     }
 
@@ -329,6 +325,9 @@ public:
             *pKey1 = lCh->keys[lCh->cnt - 1];
 
             lCh->cnt--;
+
+            _updateHeight(cur);
+            _updateHeight(lCh);
             return 0;
         }
 
@@ -344,6 +343,9 @@ public:
                 rCh->childs[j + 1] = rCh->childs[j + 2];
             }
             rCh->cnt--;
+
+            _updateHeight(cur);
+            _updateHeight(rCh);
             return 0;
         }
 
@@ -360,6 +362,7 @@ public:
                 lCh->childs[lCh->cnt] = cur->childs[j + 1];
             }
             deleteNode(cur);
+            _updateHeight(lCh);
             return 1;
         }
 
@@ -374,6 +377,7 @@ public:
                 cur->childs[cur->cnt] = rCh->childs[j + 1];
             }
             deleteNode(rCh);
+            _updateHeight(cur);
             return 2;
         }
 
@@ -388,22 +392,33 @@ public:
         // internal node
         int i = (int) (std::upper_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
         i--;
+        // prepare parameters
         node *_ch1 = (i == -1 ? nullptr : (node *) ch2->childs[i]);
         _key *_pKey1 = (i == -1 ? nullptr : &ch2->keys[i]);
         node *_ch2 = (node *) ch2->childs[i + 1];
         _key *_pKey2 = (i == ch2->cnt - 1 ? nullptr : &ch2->keys[i + 1]);
         node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *) ch2->childs[i + 2]);
+
         int status = _removeHelper(_ch1, _pKey1, _ch2, _pKey2, _ch3, key);
-        if (status == 0 || status == -1) {
-            _updateHeight(ch2);
-            return status;
-        } else if (status == 1) {// merged ch2 -> ch1 and delete ch2, delete key at i
+
+        // _ch1 or _ch2 might be freed
+        if(status == -1) { // no modification
+            return -1;
+        } else if (status == 0) { // zigzag or trivial case
+            if(i >= 0) { // update key to lower bound
+                node *p = _ch2;
+                while(p->height != 0) p = (node*) p->childs[0];
+                ch2->keys[i] = p->keys[0];
+            }
+            return 0;
+        } else if (status == 1) {// merged _ch2 -> _ch1 and delete _ch2, delete key at i
             int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
-            if(ch1) _updateHeight(ch1);
             return ret;
-        } else if (status == 2) {// merged ch3 -> ch2 and delete ch3, delete key at i + 1
+        } else if (status == 2) {// merged _ch3 -> _ch2 and delete _ch3, delete key at i + 1
             int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
-            if(ch2) _updateHeight(ch2);
+            node *p = _ch2;
+            while(p->height != 0) p = (node*) p->childs[0];
+            ch2->keys[i] = p->keys[0];
             return ret;
         }
         // should never reach here
