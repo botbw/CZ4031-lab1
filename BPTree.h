@@ -129,7 +129,7 @@ public:
     //
     // if split happened return parent ptr
     // else return nullptr
-    void _insertAtInternal(node *&ch1, int i, const _key &key, node *ptr) {
+    node* _insertAtInternal(node *ch1, int i, const _key &key, node *ptr) {
         // insert at index i
         if (ch1->cnt < N) {  // node is not full
             ch1->cnt++;
@@ -139,7 +139,7 @@ public:
             }
             ch1->keys[i] = key;
             ch1->childs[i + 1] = ptr;
-            return;
+            return nullptr;
         }
         // node is full, need to split node into ch1 ch2
         node *ch2 = newNode();
@@ -175,36 +175,45 @@ public:
             ch2->childs[j + 1] = tmpChilds[j + (N + 1) / 2 + 1 + j + 1];
         }
 
-        // parent node
-        node *parent = newNode();
-        parent->cnt = 1;
-        parent->keys[0] = parentKey;
-        parent->childs[0] = ch1;
-        parent->childs[1] = ch2;
         _updateHeight(ch1);
         _updateHeight(ch2);
-        _updateHeight(parent);
-        ch1 = parent;
+
+        return ch2;
     }
 
     // recursively find insertion position
     // handle new ptr from children if necessary
-    node *_insertHelper(node* &cur, const _key &key, _record *record) {
+    node *_insertHelper(node* cur, const _key &key, _record *record) {
         // non-root leaf
         if (cur->height == 0) return _insertAtLeaf(cur, key, record);
+
         int i =
                 (int) (upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         i--;
-        node *value = (node*) (cur->childs[i + 1]);
-        node *p = _insertHelper(value, key, record);
-        cur->childs[i + 1] = value;
+        node *ch = (node*) cur->childs[i + 1];
+        node *newCh = _insertHelper(ch, key, record);
         // insert to current node if leaf is split
-        if(p) _insertAtInternal(cur, i + 1, p->keys[0], p);
+        node *ret = nullptr;
+        if(newCh) { // tree structure is modified
+            if (newCh->height == 0) { // child is leaf split
+                ret = _insertAtInternal(cur, i + 1, newCh->keys[0], newCh);
+            } else { // child is internal split
+                node *p = newCh;
+                while (p->height != 0) p = (node *) p->childs[0];
+                ret = _insertAtInternal(cur, i + 1, p->keys[0], newCh);
+            }
+        }
+        if(i >= 0) {
+            node *p = ch;
+            while(p->height != 0) p = (node*) p->childs[0];
+            cur->keys[i] = p->keys[0];
+        }
         _updateHeight(cur);
-        return nullptr;
+        return ret;
     }
 
-    // ch1 -> ch2 -> ch3
+
+        // ch1 -> ch2 -> ch3
     // return status
     // -1: key not found and no modification
     // 0: ch2 is fine after deleting the key
@@ -536,12 +545,14 @@ public:
     void insert(const _key &key, _record *record) {
         recordCnt++;
         node *p = _insertHelper(root, key, record);
-        if(p) { // root is leaf and split
+        if(p) { // root is split
             node *newRt = newNode();
             newRt->cnt = 1;
-            newRt->keys[0] = p->keys[0];
             newRt->childs[0] = root;
             newRt->childs[1] = p;
+            node *x = (node*)newRt->childs[1];
+            while(x->height != 0) x = (node*) x->childs[0];
+            newRt->keys[0] = x->keys[0];
             _updateHeight(newRt);
             root = newRt;
         }

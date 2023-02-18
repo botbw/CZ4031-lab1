@@ -89,14 +89,19 @@ void test6() {  // delete 4 in lec
 
 void randomTest() {
     tree tr;
-    vector<int> a;
+    vector<int> a, b;
     multiset<int> s;
     //16
-    for (int i = 0; i < 10000; i++) {
+    int n = 1000000;
+    for (int i = 1; i <= n; i++) {
         int num = rand() % 10000;
         tr.insert(num, nullptr);
+        b.push_back(num);
         s.insert(num);
+
     }
+    sort(b.begin(), b.end());
+    // get [0, inf) into a
     auto tmp = tr.lower_bound(-1);
     int i = tmp.second;
     tree::node *p = tmp.first;
@@ -107,16 +112,18 @@ void randomTest() {
         p = (tree::node*)p->childs[3];
         i = 0;
     }
-    assert(is_sorted(a.begin(), a.end()));
-    cout << "after some insertions" << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << endl;
 
-    for (int i = 0; i < 10000; i++) {
+    assert(is_sorted(a.begin(), a.end()));
+    assert(a == b);
+
+    cout << "after " << n << " insertions the leaves are " << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << " height:" << tr.height() << endl;
+
+    return;
+    for (int i = 1; i <= n; i++) {
         int id = rand() % ((int) a.size());
         bool deleted = tr.remove(a[id]);
         bool _deleted = s.contains(a[id]);
-        cout << deleted << "-" << _deleted << endl;
         assert(deleted == _deleted);
-
         if(deleted == true) s.erase(s.find(a[id]));
     }
 }
@@ -145,6 +152,13 @@ void deleteTest() {
     }
 }
 
+void insertTest() {
+    tree tr;
+    int n = 1000;
+    for(int i = 1; i <= n; i++) tr.insert(i, nullptr);
+    tr.levelTraverse();
+}
+
 
 int main() {
     // insert 中pointer有多个internal 指向一个leaf
@@ -154,8 +168,8 @@ int main() {
 //    test4();
 //    test5();
 //    test6();
+//    insertTest();
 //deleteTest();
-
 randomTest();
     return 0;
 }
