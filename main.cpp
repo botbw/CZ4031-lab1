@@ -123,15 +123,25 @@ void randomTest() {
 
 void deleteTest() {
     tree tr;
-    for(int i = 1; i <= 10; i++) {
+    int n = 15;
+    for(int i = 1; i <= n; i++) {
         tr.insert(1, nullptr);
     }
     tr.levelTraverse();
+    cout << endl << endl;
+    tr.printLeaves();
+    cout << endl;
 
-    for(int i = 1; i <= 10; i++) {
+    for(int i = 1; i <= n; i++) {
+        if(i == 8) {
+            cout << "here\n";
+        }
         tr.remove(1);
-        cout << i << ": \n";
+        cout << i << ": " << endl;
         tr.levelTraverse();
+        tr.dfs();
+        cout << endl;
+
     }
 }
 

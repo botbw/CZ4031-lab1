@@ -198,9 +198,9 @@ public:
         node *value = (node*) (cur->childs[i + 1]);
         node *p = _insertHelper(value, key, record);
         cur->childs[i + 1] = value;
-        if (!p) return nullptr;  // no need split further
-        // insert to current node
-        _insertAtInternal(cur, i + 1, p->keys[0], p);
+        // insert to current node if leaf is split
+        if(p) _insertAtInternal(cur, i + 1, p->keys[0], p);
+        _updateHeight(cur);
         return nullptr;
     }
 
@@ -212,8 +212,8 @@ public:
     int _removeAtLeaf(node *ch1, _key *pKey1, node *ch2, _key *pKey2, node *ch3, const _key &key) {
         // delete at index i
         int i =
-                (int) (std::lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
-
+                (int) (std::upper_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
+        i--;
         // didn't find key
         if (i == ch2->cnt || ch2->keys[i] != key) return -1;
 
@@ -287,84 +287,84 @@ public:
 
     //        key1   key2
     //         |      |
-    // ch1 -> ch2 -> ch3
+    // lCh -> cur -> rCh
     // return status
-    // 0: ch2 is fine after deleting the key
-    // 1: merge ch2 into ch1, 2: merge ch3 into ch2
-    int _removeAtInternal(node *ch1, _key *pKey1, node *ch2, _key *pKey2,
-                          node *ch3, int i) {
+    // 0: cur is fine after deleting the key
+    // 1: merge cur into lCh, 2: merge rCh into cur
+    int _removeAtInternal(node *lCh, _key *pKey1, node *cur, _key *pKey2,
+                          node *rCh, int i) {
         // remove the key
-        for (int j = i; j < ch2->cnt - 1; j++) {
-            ch2->keys[j] = ch2->keys[j + 1];
-            ch2->childs[j + 1] = ch2->childs[j + 2];
+        for (int j = i; j < cur->cnt - 1; j++) {
+            cur->keys[j] = cur->keys[j + 1];
+            cur->childs[j + 1] = cur->childs[j + 2];
         }
-        ch2->cnt--;
+        cur->cnt--;
 
         // case 1 node is still fine
-        if (ch2->cnt >= N / 2) return 0;
+        if (cur->cnt >= N / 2) return 0;
 
         // case 2 borrow from siblings
 
         // zig
-        if (ch1 && ch1->cnt > N / 2) {
-            ch2->cnt += 1;
-            for (int j = ch2->cnt - 1; j > 0; j--) {
-                ch2->keys[j] = ch2->keys[j - 1];
-                ch2->childs[j + 1] = ch2->childs[j];
+        if (lCh && lCh->cnt > N / 2) {
+            cur->cnt += 1;
+            for (int j = cur->cnt - 1; j > 0; j--) {
+                cur->keys[j] = cur->keys[j - 1];
+                cur->childs[j + 1] = cur->childs[j];
             }
-            ch2->childs[1] = ch2->childs[0];
+            cur->childs[1] = cur->childs[0];
 
             // left most pointer and borrowed key from parent
-            ch2->keys[0] = *pKey1;
-            ch2->childs[0] = ch1->childs[ch1->cnt];
-            *pKey1 = ch1->keys[ch1->cnt - 1];
+            cur->keys[0] = *pKey1;
+            cur->childs[0] = lCh->childs[lCh->cnt];
+            *pKey1 = lCh->keys[lCh->cnt - 1];
 
-            ch1->cnt--;
+            lCh->cnt--;
             return 0;
         }
 
         // zag
-        if (ch3 && ch3->cnt > N / 2) {
-            ch2->cnt++;
-            ch2->keys[ch2->cnt - 1] = *pKey2;
-            ch2->childs[ch2->cnt] = ch3->childs[0];
-            *pKey2 = ch3->keys[0];
-            ch3->childs[0] = ch3->childs[1];
-            for (int j = 0; j < ch3->cnt - 1; j++) {
-                ch3->keys[j] = ch3->keys[j + 1];
-                ch3->childs[j + 1] = ch3->childs[j + 2];
+        if (rCh && rCh->cnt > N / 2) {
+            cur->cnt++;
+            cur->keys[cur->cnt - 1] = *pKey2;
+            cur->childs[cur->cnt] = rCh->childs[0];
+            *pKey2 = rCh->keys[0];
+            rCh->childs[0] = rCh->childs[1];
+            for (int j = 0; j < rCh->cnt - 1; j++) {
+                rCh->keys[j] = rCh->keys[j + 1];
+                rCh->childs[j + 1] = rCh->childs[j + 2];
             }
-            ch3->cnt--;
+            rCh->cnt--;
             return 0;
         }
 
         // case 3 cannot borrow
 
-        // merge ch2 into ch1
-        if (ch1) {
-            ch1->cnt++;
-            ch1->keys[ch1->cnt - 1] = *pKey1;
-            ch1->childs[ch1->cnt] = ch2->childs[0];
-            for (int j = 0; j < ch2->cnt; j++) {
-                ch1->cnt++;
-                ch1->keys[ch1->cnt - 1] = ch2->keys[j];
-                ch1->childs[ch1->cnt] = ch2->childs[j + 1];
+        // merge cur into lCh
+        if (lCh) {
+            lCh->cnt++;
+            lCh->keys[lCh->cnt - 1] = *pKey1;
+            lCh->childs[lCh->cnt] = cur->childs[0];
+            for (int j = 0; j < cur->cnt; j++) {
+                lCh->cnt++;
+                lCh->keys[lCh->cnt - 1] = cur->keys[j];
+                lCh->childs[lCh->cnt] = cur->childs[j + 1];
             }
-            deleteNode(ch2);
+            deleteNode(cur);
             return 1;
         }
 
-        // merge ch3 into ch2
-        if (ch3) {
-            ch2->cnt++;
-            ch2->keys[ch2->cnt - 1] = *pKey2;
-            ch2->childs[ch2->cnt] = ch3->childs[0];
-            for (int j = 0; j < ch3->cnt; j++) {
-                ch2->cnt++;
-                ch2->keys[ch2->cnt - 1] = ch3->keys[j];
-                ch2->childs[ch2->cnt] = ch3->childs[j + 1];
+        // merge rCh into cur
+        if (rCh) {
+            cur->cnt++;
+            cur->keys[cur->cnt - 1] = *pKey2;
+            cur->childs[cur->cnt] = rCh->childs[0];
+            for (int j = 0; j < rCh->cnt; j++) {
+                cur->cnt++;
+                cur->keys[cur->cnt - 1] = rCh->keys[j];
+                cur->childs[cur->cnt] = rCh->childs[j + 1];
             }
-            deleteNode(ch3);
+            deleteNode(rCh);
             return 2;
         }
 
@@ -377,20 +377,26 @@ public:
         // leaf node
         if (ch2->height == 0) return _removeAtLeaf(ch1, pKey1, ch2, pKey2, ch3, key);
         // internal node
-        int i = (int) (std::lower_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
-        if (i == ch2->cnt || key < ch2->keys[i]) i--;
+        int i = (int) (std::upper_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
+        i--;
         node *_ch1 = (i == -1 ? nullptr : (node *) ch2->childs[i]);
         _key *_pKey1 = (i == -1 ? nullptr : &ch2->keys[i]);
         node *_ch2 = (node *) ch2->childs[i + 1];
         _key *_pKey2 = (i == ch2->cnt - 1 ? nullptr : &ch2->keys[i + 1]);
         node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *) ch2->childs[i + 2]);
         int status = _removeHelper(_ch1, _pKey1, _ch2, _pKey2, _ch3, key);
-        if (status == 0 || status == -1)
+        if (status == 0 || status == -1) {
+            _updateHeight(ch2);
             return status;
-        else if (status == 1) // merged ch2 -> ch1, delete key at i
-            return _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
-        else if (status == 2) // merged ch3 -> ch2, delete key at i + 1
-            return _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
+        } else if (status == 1) {// merged ch2 -> ch1 and delete ch2, delete key at i
+            int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
+            if(ch1) _updateHeight(ch1);
+            return ret;
+        } else if (status == 2) {// merged ch3 -> ch2 and delete ch3, delete key at i + 1
+            int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
+            if(ch2) _updateHeight(ch2);
+            return ret;
+        }
         // should never reach here
         throw runtime_error("In _removeAtInternal: should never reach here");
     }
@@ -479,6 +485,35 @@ public:
             cout << endl;
             sz = nxt;
         }
+    }
+
+    void printLeaves(node *cur) {
+        if(cur->height == 0) {
+            cout << *cur;
+            return;
+        }
+        printLeaves((node*) cur->childs[0]);
+        for(int i = 0; i < cur->cnt; i++) printLeaves((node*)cur->childs[i + 1]);
+    }
+
+    void printLeaves() {
+        printLeaves(root);
+    }
+
+    void dfs(node *cur, map<node*, int> &m, int &idx) {
+        if(m[cur] == 0) m[cur] = ++idx;
+        cout << "[" << m[cur] << "]" << *cur;
+        if(cur->height == 0) return;
+        dfs((node*) cur->childs[0], m, idx);
+        for(int i = 0; i < cur->cnt; i++) dfs((node*) cur->childs[i + 1], m, idx);
+    }
+
+    void dfs() {
+        static map<node*, int> m;
+        static int idx = 0;
+        m.clear();
+        idx = 0;
+        dfs(root, m, idx);
     }
 
     BPTree() : root{newNode()}, nodeCnt{0}, recordCnt{0} {}
