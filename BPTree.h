@@ -73,6 +73,13 @@ public:
         cur->height = mx + 1;
     }
 
+    // for non leaf node
+    void _updateKey(node *cur, int i) {
+        node *p = (node*) cur->childs[i + 1];
+        while(p->height != 0) p = (node*) p->childs[0];
+        cur->keys[i] = p->keys[0];
+    }
+
     // insert record ptr at leaf node
     //
     // if split happened return the new node ptr
@@ -215,9 +222,6 @@ public:
     // 0: ch2 is fine after deleting the key
     // 1: merge ch2 into ch1, 2: merge ch3 into ch2
     int _removeAtLeaf(node *ch1, _key *pKey1, node *ch2, _key *pKey2, node *ch3, const _key &key) {
-        if(key == 4567) {
-            cout << "here" << endl;
-        }
         // delete at index i
         int i =
                 (int) (std::upper_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
@@ -323,8 +327,8 @@ public:
             cur->childs[1] = cur->childs[0];
 
             // left most pointer and borrowed key from parent
-            cur->keys[0] = *pKey1;
             cur->childs[0] = lCh->childs[lCh->cnt];
+            _updateKey(cur, 0);
             *pKey1 = lCh->keys[lCh->cnt - 1];
 
             lCh->cnt--;
@@ -346,7 +350,6 @@ public:
                 rCh->childs[j + 1] = rCh->childs[j + 2];
             }
             rCh->cnt--;
-
             _updateHeight(cur);
             _updateHeight(rCh);
             return 0;
@@ -357,8 +360,8 @@ public:
         // merge cur into lCh
         if (lCh) {
             lCh->cnt++;
-            lCh->keys[lCh->cnt - 1] = *pKey1;
             lCh->childs[lCh->cnt] = cur->childs[0];
+            _updateKey(lCh, lCh->cnt - 1);
             for (int j = 0; j < cur->cnt; j++) {
                 lCh->cnt++;
                 lCh->keys[lCh->cnt - 1] = cur->keys[j];
@@ -403,29 +406,17 @@ public:
         node *_ch3 = (i == ch2->cnt - 1 ? nullptr : (node *) ch2->childs[i + 2]);
 
         int status = _removeHelper(_ch1, _pKey1, _ch2, _pKey2, _ch3, key);
+        // _ch2 or _ch3 might be freed
 
-        // _ch1 or _ch2 might be freed
         if(status == -1) { // no modification
-            return -1;
-        } else if (status == 0) { // zigzag or trivial case
-            if(i >= 0) { // update key to lower bound
-                node *p = _ch2;
-                while(p->height != 0) p = (node*) p->childs[0];
-                ch2->keys[i] = p->keys[0];
-            }
+           return -1;
+        } else if(status == 0) {
+            if(i >= 0) _updateKey(ch2, i);
             return 0;
-        } else if (status == 1) {// merged _ch2 -> _ch1 and delete _ch2, delete key at i
-            int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
-
-            return ret;
-        } else if (status == 2) {// merged _ch3 -> _ch2 and delete _ch3, delete key at i + 1
-            int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
-            if(i >= 0) { // update key to lower bound
-                node *p = _ch2;
-                while (p->height != 0) p = (node *) p->childs[0];
-                ch2->keys[i] = p->keys[0];
-            }
-            return ret;
+        }else if (status == 1) { // merged _ch2 -> _ch1 and delete _ch2, need to delete i-th key
+            return  _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
+        } else if (status == 2) { // merged _ch3 -> _ch2 and delete _ch3
+            return _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
         }
         // should never reach here
         throw runtime_error("In _removeAtInternal: should never reach here");

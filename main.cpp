@@ -47,16 +47,10 @@ void functionalTest() {
 
     for (int i = 1; i <= n; i++) {
         int id = rand() % ((int) a.size());
-        if(b[id] == 4567) {
-            tr.levelTraverse();
-        }
         bool deleted = tr.remove(a[id]);
         assert(tr.selfCheck());
         bool _deleted = s.contains(a[id]);
-        if(b[id] == 4567) {
-            cout << deleted << "-" << _deleted << endl;
-            tr.levelTraverse();
-        }
+        if(deleted != _deleted) cout << a[id] << endl;
         assert(deleted == _deleted);
         if(_deleted == true) s.erase(s.find(a[id]));
     }
@@ -104,6 +98,6 @@ void randomTest() {
 
 int main() {
     functionalTest();
-//    randomTest();
+    randomTest();
     return 0;
 }
