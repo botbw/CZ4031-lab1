@@ -25,8 +25,7 @@ void functionalTest() {
     int n = 10000;
 
     tree tr;
-    vector<int> b; // to store inserted keys
-    multiset<int> s; // to simulate deletions
+    multiset<int> s; // to simulate tree
 
     cout << "try " << n << " random insertions and then "<< n << " deletions:" << endl;
     for (int i = 1; i <= n; i++) {
@@ -34,12 +33,11 @@ void functionalTest() {
         tr.insert(num, nullptr);
 //        tr.levelTraverse();
         assert(tr.selfCheck());
-        b.push_back(num);
         s.insert(num);
     }
 
-    sort(b.begin(), b.end());
     vector<int> a = getAllFromZero(tr);
+    vector<int> b(s.begin(), s.end());
     assert(a == b);
 
     cout << "tree survives after " << n << " insertions" << endl;
@@ -56,7 +54,8 @@ void functionalTest() {
     }
     cout << "tree survives after " << n << " deletions" << endl;
     cout << "tree height: " << tr.height() << endl;
-
+    cout << "tree structure" << endl;
+    tr.levelTraverse();
     cout << "pass\n";
 }
 
@@ -91,12 +90,14 @@ void randomTest() {
     }
     cout << "tree survives after " << n << " operations" << endl;
     cout << "tree height: " << tr.height() << endl;
-
+    cout << "tree structure" << endl;
+    tr.levelTraverse();
     cout << "pass" << endl;
 }
 
 
 int main() {
+    srand(time(NULL));
     functionalTest();
     randomTest();
     return 0;
