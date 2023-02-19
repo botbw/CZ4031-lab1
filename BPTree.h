@@ -167,7 +167,6 @@ public:
         tmpChilds[i + 1] = (void *) ptr;
 
         // took the (N + 1)/2 th key and pointer
-        _key parentKey = tmpKey[(N + 1) / 2];
         void *ch2Child = tmpChilds[(N + 1) / 2 + 1];
 
         // write to ch1 and ch2
