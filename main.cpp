@@ -4,105 +4,8 @@
 using tree= BPTree<int, int, 3>;
 using node = tree::node;
 
-void test1() {  // insertion in tut
-    tree tr;
-    int arr[11];
-
-    for (int i = 1; i <= 10; i++) {
-        arr[i] = i * 10;
-        cout << "inserting: " << arr[i] << endl;
-        tr.insert(arr[i], arr + i);
-        tr.levelTraverse();
-        cout << endl << endl << endl;
-    }
-
-    cout << tr.height() << endl;
-    cout << tr.size() << endl;
-}
-
-void test2() {  // insertion in lec
-    tree tr;
-    int arr[12] = {1, 4, 7, 10, 17, 21, 31, 25, 19, 20, 28, 42};
-    for (int i = 0; i < 12; i++) {
-        cout << "inserting: " << arr[i] << endl;
-        tr.insert(arr[i], arr + i);
-        tr.levelTraverse();
-        cout << endl << endl << endl;
-    }
-    cout << tr.height() << endl;
-    cout << tr.size() << endl;
-}
-
-void test3() {  // delete 5 in lec
-    tree tr;
-    int arr[] = {1, 4, 7, 10, 17, 21, 31, 25, 19, 20, 5};
-    for (int i = 0; i < 11; i++) {
-        tr.insert(arr[i], arr + i);
-    }
-    tr.levelTraverse();
-    cout << "deleting: " << 5 << endl;
-    tr.remove(5);
-    tr.levelTraverse();
-    cout << endl << endl << endl;
-}
-
-void test4() {  // delete 17 in lec
-    tree tr;
-    int arr[] = {1, 4, 7, 10, 17, 21, 31, 25, 19, 20, 5, 16};
-    for (int i = 0; i < 12; i++) {
-        tr.insert(arr[i], arr + i);
-    }
-    tr.levelTraverse();
-    cout << "deleting: " << 17 << endl;
-    tr.remove(17);
-    tr.levelTraverse();
-    cout << endl << endl << endl;
-}
-
-void test5() {  // delete 4 in lec
-    tree tr;
-    int arr[] = {1, 4, 7, 10, 17, 21, 31, 25, 19, 20};
-    for (int i = 0; i < 10; i++) {
-        tr.insert(arr[i], arr + i);
-    }
-    tr.levelTraverse();
-    cout << "deleting: " << 4 << endl;
-    tr.remove(4);
-    tr.levelTraverse();
-    cout << endl << endl << endl;
-}
-
-void test6() {  // delete 4 in lec
-    tree tr;
-    int arr[] = {1, 4, 7, 10, 17, 21, 31, 25, 19, 20};
-    for (int i = 0; i < 10; i++) {
-        tr.insert(arr[i], arr + i);
-    }
-    tr.remove(17);
-    tr.remove(19);
-    tr.levelTraverse();
-    cout << "deleting: " << 4 << endl;
-    tr.remove(4);
-    tr.levelTraverse();
-    cout << endl << endl << endl;
-}
-
-void randomTest() {
-    tree tr;
-    vector<int> a, b;
-    multiset<int> s;
-    //16
-//    srand(time(NULL));
-    int n = 500;
-    for (int i = 1; i <= n; i++) {
-        int num = rand() % 10000;
-//        num = 1;
-        tr.insert(num, nullptr);
-        b.push_back(num);
-        s.insert(num);
-
-    }
-    sort(b.begin(), b.end());
+vector<int> getAllFromZero(const tree &tr) {
+    vector<int> a;
     // get [0, inf) into a
     auto tmp = tr.lower_bound(-1);
     int i = tmp.second;
@@ -114,55 +17,93 @@ void randomTest() {
         p = (tree::node*)p->childs[3];
         i = 0;
     }
+    return a;
+}
 
-    assert(is_sorted(a.begin(), a.end()));
+void functionalTest() {
+    int range = rand();
+    int n = 10000;
+
+    tree tr;
+    vector<int> b; // to store inserted keys
+    multiset<int> s; // to simulate deletions
+
+    cout << "try " << n << " random insertions and then "<< n << " deletions:" << endl;
+    for (int i = 1; i <= n; i++) {
+        int num = rand() % range;
+        tr.insert(num, nullptr);
+//        tr.levelTraverse();
+        assert(tr.selfCheck());
+        b.push_back(num);
+        s.insert(num);
+    }
+
+    sort(b.begin(), b.end());
+    vector<int> a = getAllFromZero(tr);
     assert(a == b);
 
-    cout << "after " << n << " insertions the leaves are " << (is_sorted(a.begin(), a.end()) ? "sorted" : "unsorted") << " height:" << tr.height() << endl;
-    tr.levelTraverse();
-//    return;
+    cout << "tree survives after " << n << " insertions" << endl;
+    cout << "tree height: " << tr.height() << endl;
+
     for (int i = 1; i <= n; i++) {
         int id = rand() % ((int) a.size());
-        bool deleted = tr.remove(a[id]);
-        bool _deleted = s.contains(a[id]);
-        if(deleted != _deleted) {
-            cout << a[id] << endl;
+        if(b[id] == 4567) {
             tr.levelTraverse();
-            return;
         }
+        bool deleted = tr.remove(a[id]);
+        assert(tr.selfCheck());
+        bool _deleted = s.contains(a[id]);
+        if(b[id] == 4567) {
+            cout << deleted << "-" << _deleted << endl;
+            tr.levelTraverse();
+        }
+        assert(deleted == _deleted);
         if(_deleted == true) s.erase(s.find(a[id]));
     }
+    cout << "tree survives after " << n << " deletions" << endl;
+    cout << "tree height: " << tr.height() << endl;
+
     cout << "pass\n";
 }
 
-void deleteTest() {
-    tree tr;
-    int n = 15;
-    for (int i = 1; i <= n; i++) {
-        tr.insert(1, nullptr);
-    }
-    tr.levelTraverse();
-    cout << endl << endl;
+void randomTest() {
+    int n = 10000;
+    int range = rand();
 
-    for (int i = 1; i <= n; i++) {
-        tr.remove(1);
-        cout << i << ": " << endl;
-        tr.levelTraverse();
-        cout << endl;
+    tree tr;
+    vector<int> b; // to store inserted keys
+    multiset<int> s; // to simulate deletions
+
+    cout << n << " random operations" << endl;
+
+    for(int i = 1; i <= n; i++) {
+        int op = rand() % 2;
+        if(op == 0) { // insert
+            int num = rand() % range;
+            tr.insert(num, nullptr);
+            b.push_back(num);
+            s.insert(num);
+        } else {
+            if(b.size() == 0) continue;
+            int id = rand() % ((int) b.size());
+            bool deleted = tr.remove(b[id]);
+            bool _deleted = s.contains(b[id]);
+
+            assert(deleted == _deleted);
+
+            if(_deleted) s.erase(s.find(b[id]));
+        }
+        assert(tr.selfCheck());
     }
+    cout << "tree survives after " << n << " operations" << endl;
+    cout << "tree height: " << tr.height() << endl;
+
+    cout << "pass" << endl;
 }
 
 
 int main() {
-    // insert 中pointer有多个internal 指向一个leaf
-//    test1();
-//    test2();
-//    test3();
-//    test4();
-//    test5();
-//    test6();
-//    insertTest();
-//deleteTest();
-randomTest();
+    functionalTest();
+//    randomTest();
     return 0;
 }

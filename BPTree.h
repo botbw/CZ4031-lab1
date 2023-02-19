@@ -215,12 +215,15 @@ public:
     // 0: ch2 is fine after deleting the key
     // 1: merge ch2 into ch1, 2: merge ch3 into ch2
     int _removeAtLeaf(node *ch1, _key *pKey1, node *ch2, _key *pKey2, node *ch3, const _key &key) {
+        if(key == 4567) {
+            cout << "here" << endl;
+        }
         // delete at index i
         int i =
                 (int) (std::upper_bound(ch2->keys, ch2->keys + ch2->cnt, key) - ch2->keys);
         i--;
         // didn't find key
-        if (i == ch2->cnt || ch2->keys[i] != key) return -1;
+        if (i == -1 || ch2->keys[i] != key) return -1;
 
         // remove the key
         for (int j = i; j < ch2->cnt - 1; j++) {
@@ -413,12 +416,15 @@ public:
             return 0;
         } else if (status == 1) {// merged _ch2 -> _ch1 and delete _ch2, delete key at i
             int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i);
+
             return ret;
         } else if (status == 2) {// merged _ch3 -> _ch2 and delete _ch3, delete key at i + 1
             int ret = _removeAtInternal(ch1, pKey1, ch2, pKey2, ch3, i + 1);
-            node *p = _ch2;
-            while(p->height != 0) p = (node*) p->childs[0];
-            ch2->keys[i] = p->keys[0];
+            if(i >= 0) { // update key to lower bound
+                node *p = _ch2;
+                while (p->height != 0) p = (node *) p->childs[0];
+                ch2->keys[i] = p->keys[0];
+            }
             return ret;
         }
         // should never reach here
@@ -616,6 +622,41 @@ public:
             i = 0;
         }
         return ret;
+    }
+
+    bool selfCheck(node *cur) {
+        if(cur->height == 0) { // leaf check
+            if(cur == root) return true; // root is the special case
+            if(cur->cnt < (N + 1) / 2) return false; // cnt check
+            // siblings check will be done by checking order
+            return true;
+        }
+        // node check
+        if(cur->cnt < N / 2) return false;
+        if(!selfCheck((node*) cur->childs[0])) return false;
+        for(int i = 0; i < cur->cnt; i++) {
+            node *p = (node*) cur->childs[i + 1];
+            while(p->height != 0) p = (node*) p->childs[0];
+            if(cur->keys[i] != p->keys[0]) return false;
+            // check childs
+            if(!selfCheck(p)) return false;
+        }
+        return true;
+    }
+
+    bool selfCheck() {
+        auto tmp = lower_bound(-1);
+        int i = tmp.second;
+        node *p = tmp.first;
+        vector<_key> a;
+        while(p) {
+            for(; i < p->cnt; i++) {
+                a.push_back(p->keys[i]);
+            }
+            p = (node*)p->childs[3];
+            i = 0;
+        }
+        return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
 };
 
