@@ -644,12 +644,7 @@ public:
             p = (node*)p->childs[N];
             i = 0;
         }
-        bool val1 = is_sorted(a.begin(), a.end());
-        bool val2 = selfCheck(root);
-        if(!(val1 && val2)) {
-            cout << "here";
-        }
-        return val1 && val2;
+        return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
 };
 
