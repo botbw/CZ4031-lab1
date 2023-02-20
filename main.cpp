@@ -1,7 +1,10 @@
 #include <iostream>
 #include "BPTree.h"
 
-using tree= BPTree<int, int, 3>;
+// num of children
+const int N = 10;
+
+using tree= BPTree<int, int, N>;
 using node = tree::node;
 
 vector<int> getAllFromZero(const tree &tr) {
@@ -9,12 +12,12 @@ vector<int> getAllFromZero(const tree &tr) {
     // get [0, inf) into a
     auto tmp = tr.lower_bound(-1);
     int i = tmp.second;
-    tree::node *p = tmp.first;
+    node *p = tmp.first;
     while(p) {
         for(; i < p->cnt; i++) {
             a.push_back(p->keys[i]);
         }
-        p = (tree::node*)p->childs[3];
+        p = (node*)p->childs[N];
         i = 0;
     }
     return a;
@@ -97,7 +100,7 @@ void randomTest() {
 
 
 int main() {
-    srand(time(NULL));
+//    srand(time(NULL));
     functionalTest();
     randomTest();
     return 0;

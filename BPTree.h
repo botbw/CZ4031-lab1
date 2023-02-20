@@ -180,7 +180,7 @@ public:
         ch2->childs[0] = ch2Child;
         for (int j = 0; j < ch2->cnt; j++) {
             ch2->keys[j] = tmpKey[(N + 1) / 2 + 1 + j];
-            ch2->childs[j + 1] = tmpChilds[j + (N + 1) / 2 + 1 + j + 1];
+            ch2->childs[j + 1] = tmpChilds[(N + 1) / 2 + 1 + j + 1];
         }
 
         _updateHeight(ch1);
@@ -201,17 +201,14 @@ public:
         node *ch = (node*) cur->childs[i + 1];
         node *newCh = _insertHelper(ch, key, record);
         // insert to current node if leaf is split
-        node *ret = nullptr;
         if(newCh) { // new child is created
             node *p = newCh;
             while (p->height != 0) p = (node *) p->childs[0];
-            ret = _insertAtInternal(cur, i + 1, p->keys[0], newCh);
-        } else if (i >= 0) {
-            node *p = ch;
-            while(p->height != 0) p = (node*) p->childs[0];
-            cur->keys[i] = p->keys[0];
+            return _insertAtInternal(cur, i + 1, p->keys[0], newCh);
+        } else {
+            if(i >= 0) _updateKey(cur, i);
+            return nullptr;
         }
-        return ret;
     }
 
 
@@ -452,7 +449,8 @@ public:
 
         p->cnt = 0;
         p->height = 0;
-        memset(p->childs, 0, sizeof 0);
+        memset(p->keys, 0, sizeof p->keys);
+        memset(p->childs, 0, sizeof p->childs);
         return p;
     }
 
@@ -460,6 +458,7 @@ public:
     static void deleteNodeGlobal(node *p) {
         // TODO: use disk pool
         globalNodeCnt--;
+        memset(p->keys, 0x3f, sizeof p->keys);
         memset(p->childs, 0x3f, sizeof(p->childs));
         delete p;
     }
@@ -616,13 +615,12 @@ public:
 
     bool selfCheck(node *cur) {
         if(cur->height == 0) { // leaf check
-            if(cur == root) return true; // root is the special case
-            if(cur->cnt < (N + 1) / 2) return false; // cnt check
+            if(cur != root && cur->cnt < (N + 1) / 2) return false; // cnt check
             // siblings check will be done by checking order
             return true;
         }
         // node check
-        if(cur->cnt < N / 2) return false;
+        if(cur != root && cur->cnt < N / 2) return false;
         if(!selfCheck((node*) cur->childs[0])) return false;
         for(int i = 0; i < cur->cnt; i++) {
             node *p = (node*) cur->childs[i + 1];
@@ -643,10 +641,15 @@ public:
             for(; i < p->cnt; i++) {
                 a.push_back(p->keys[i]);
             }
-            p = (node*)p->childs[3];
+            p = (node*)p->childs[N];
             i = 0;
         }
-        return is_sorted(a.begin(), a.end()) && selfCheck(root);
+        bool val1 = is_sorted(a.begin(), a.end());
+        bool val2 = selfCheck(root);
+        if(!(val1 && val2)) {
+            cout << "here";
+        }
+        return val1 && val2;
     }
 };
 
