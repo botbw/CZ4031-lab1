@@ -421,7 +421,7 @@ public:
             deleteNode(cur);
             return;
         }
-//        _destruct((node *) cur->childs[0]);
+        _destruct((node *) cur->childs[0]);
         for (int i = 0; i < cur->cnt; i++)
             _destruct((node *) cur->childs[i + 1]);
         deleteNode(cur);
@@ -443,10 +443,11 @@ public:
 
     static node *newNodeGlobal() {
         // TODO: use disk pool
-        node *p =
+        node *p = new node();
 
         p->cnt = 0;
         p->height = 0;
+        p->childs[N] = 0;
         memset(p->keys, 0, sizeof p->keys);
         memset(p->childs, 0, sizeof p->childs);
         return p;
@@ -459,11 +460,6 @@ public:
         memset(p->keys, 0x3f, sizeof p->keys);
         memset(p->childs, 0x3f, sizeof(p->childs));
         delete p;
-    }
-
-    // only for single record
-    static _record* newRecordGlobal() {
-
     }
 
     // for debugging
