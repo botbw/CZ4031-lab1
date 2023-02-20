@@ -5,8 +5,6 @@
 
 using namespace std;
 
-
-
 template<typename _key, typename _record, int N>
 class BPTree {
 public:
@@ -445,7 +443,7 @@ public:
 
     static node *newNodeGlobal() {
         // TODO: use disk pool
-        node *p = new node();
+        node *p =
 
         p->cnt = 0;
         p->height = 0;
@@ -461,6 +459,11 @@ public:
         memset(p->keys, 0x3f, sizeof p->keys);
         memset(p->childs, 0x3f, sizeof(p->childs));
         delete p;
+    }
+
+    // only for single record
+    static _record* newRecordGlobal() {
+
     }
 
     // for debugging
