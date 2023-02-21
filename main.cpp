@@ -33,7 +33,7 @@ void functionalTest() {
     cout << "try " << n << " random insertions and then "<< n << " deletions:" << endl;
     for (int i = 1; i <= n; i++) {
         int num = rand() % range;
-        tr.insert(num, nullptr);
+        tr.insert(num, num);
 //        tr.levelTraverse();
         assert(tr.selfCheck());
         s.insert(num);
@@ -76,7 +76,7 @@ void randomTest() {
         int op = rand() % 2;
         if(op == 0) { // insert
             int num = rand() % range;
-            tr.insert(num, nullptr);
+            tr.insert(num, num);
             b.push_back(num);
             s.insert(num);
         } else {

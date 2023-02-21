@@ -3,6 +3,8 @@
 
 #include "bits/stdc++.h"
 
+#define DEBUG
+
 using namespace std;
 
 template<typename _key, typename _record, int N>
@@ -39,8 +41,7 @@ public:
     };
 
 public:
-    // global cnt for node
-    static int globalNodeCnt;
+
 
     node *root;
     // node number of current tree
@@ -51,13 +52,41 @@ public:
     // only for single node
     node *newNode() {
         nodeCnt++;
-        return newNodeGlobal();
+        // TODO
+        node *p = new node();
+#ifdef DEBUG
+        p->cnt = 0;
+        p->height = 0;
+        p->childs[N] = 0;
+        memset(p->keys, 0, sizeof p->keys);
+        memset(p->childs, 0, sizeof p->childs);
+#endif
+        return p;
     }
 
     // only for single node
     void deleteNode(node *p) {
         nodeCnt--;
-        deleteNodeGlobal(p);
+#ifdef DEBUG
+        memset(p->keys, 0x3f, sizeof p->keys);
+        memset(p->childs, 0x3f, sizeof(p->childs));
+#endif
+        // TODO
+        delete p;
+    }
+
+    // only for single node
+    _record *newRecord(const _record &r) {
+        recordCnt++;
+        // TODO, need copy constructor of record
+        return new _record(r);
+    }
+
+    // only for single node
+    void deleteRecord(_record *p) {
+        recordCnt--;
+        // TODO
+        delete p;
     }
 
     // for non leaf node
@@ -82,7 +111,7 @@ public:
     //
     // if split happened return the new node ptr
     // return nullptr
-    node *_insertAtLeaf(node *ch1, const _key &key, _record *record) {
+    node *_insertAtLeaf(node *ch1, const _key &key, const _record &record) {
         // insert at index i
         int i =
                 (int) (upper_bound(ch1->keys, ch1->keys + ch1->cnt, key) - ch1->keys);
@@ -93,7 +122,7 @@ public:
                 ch1->childs[j] = ch1->childs[j - 1];
             }
             ch1->keys[i] = key;
-            ch1->childs[i] = (void *) record;
+            ch1->childs[i] = (void* )newRecord(record);
             // no split
             return nullptr;
         }
@@ -111,7 +140,7 @@ public:
             tmpChild[j] = tmpChild[j - 1];
         }
         tmpKey[i] = key;
-        tmpChild[i] = (void *) record;
+        tmpChild[i] = (void *) newRecord(record);
 
         // write to ch1 and ch2
         ch1->cnt = (N + 1) / 2;
@@ -189,7 +218,7 @@ public:
 
     // recursively find insertion position
     // handle new ptr from children if necessary
-    node *_insertHelper(node* cur, const _key &key, _record *record) {
+    node *_insertHelper(node* cur, const _key &key, const _record &record) {
         // non-root leaf
         if (cur->height == 0) return _insertAtLeaf(cur, key, record);
 
@@ -224,6 +253,7 @@ public:
         if (i == -1 || ch2->keys[i] != key) return -1;
 
         // remove the key
+        deleteRecord((_record*) ch2->childs[i]);
         for (int j = i; j < ch2->cnt - 1; j++) {
             ch2->keys[j] = ch2->keys[j + 1];
             ch2->childs[j] = ch2->childs[j + 1];
@@ -439,29 +469,6 @@ public:
     }
 
 public:
-    static int globalNodeSize() { return globalNodeCnt; }
-
-    static node *newNodeGlobal() {
-        // TODO: use disk pool
-        node *p = new node();
-
-        p->cnt = 0;
-        p->height = 0;
-        p->childs[N] = 0;
-        memset(p->keys, 0, sizeof p->keys);
-        memset(p->childs, 0, sizeof p->childs);
-        return p;
-    }
-
-    // only for single node
-    static void deleteNodeGlobal(node *p) {
-        // TODO: use disk pool
-        globalNodeCnt--;
-        memset(p->keys, 0x3f, sizeof p->keys);
-        memset(p->childs, 0x3f, sizeof(p->childs));
-        delete p;
-    }
-
     // for debugging
     void levelTraverse(node *cur) const {
         queue<node *> q;
@@ -551,7 +558,7 @@ public:
     }
 
     // if key already exists, insert to upper bound
-    void insert(const _key &key, _record *record) {
+    void insert(const _key &key, const _record &record) {
         recordCnt++;
         node *p = _insertHelper(root, key, record);
         if(p) { // root is split
@@ -646,8 +653,4 @@ public:
         return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
 };
-
-template<typename _key, typename _record, int N>
-int BPTree<_key, _record, N>::globalNodeCnt = 0;
-
 #endif //BPTREE_BPTREE_H
