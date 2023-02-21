@@ -460,6 +460,7 @@ private:
 
     // search lower_bound according to key (the first record_key >= key)
     pair<node *, int> _lower_bound(node *cur, const _key &key) const {
+        assert(false); // might be buggy, 需要详细讨论下重复key情况
         int i =
                 (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         // leaf node
