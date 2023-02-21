@@ -39,10 +39,7 @@ public:
             return ret;
         }
     };
-
-public:
-
-
+private:
     node *root;
     // node number of current tree
     int nodeCnt;
@@ -469,78 +466,6 @@ public:
     }
 
 public:
-    // for debugging
-    void levelTraverse(node *cur) const {
-        queue<node *> q;
-        q.push(cur);
-        int sz = 1;
-        while (q.size()) {
-            int nxt = 0;
-            for (int i = 1; i <= sz; i++) {
-                node *frt = q.front();
-                q.pop();
-                cout << *frt;
-                if (frt->height == 0) continue;
-                for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *) frt->childs[j]);
-                    nxt++;
-                }
-            }
-            cout << endl;
-            sz = nxt;
-        }
-    }
-    // for debugging
-    void levelTraverse() const {
-        queue<node *> q;
-        q.push(root);
-        int sz = 1;
-        while (q.size()) {
-            int nxt = 0;
-            for (int i = 1; i <= sz; i++) {
-                node *frt = q.front();
-                q.pop();
-                cout << *frt;
-                if (frt->height == 0) continue;
-                for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *) frt->childs[j]);
-                    nxt++;
-                }
-            }
-            cout << endl;
-            sz = nxt;
-        }
-    }
-
-    void printLeaves(node *cur) {
-        if(cur->height == 0) {
-            cout << *cur;
-            return;
-        }
-        printLeaves((node*) cur->childs[0]);
-        for(int i = 0; i < cur->cnt; i++) printLeaves((node*)cur->childs[i + 1]);
-    }
-
-    void printLeaves() {
-        printLeaves(root);
-    }
-
-    void dfs(node *cur, map<node*, int> &m, int &idx) {
-        if(m[cur] == 0) m[cur] = ++idx;
-        cout << "[" << m[cur] << "]" << *cur;
-        if(cur->height == 0) return;
-        dfs((node*) cur->childs[0], m, idx);
-        for(int i = 0; i < cur->cnt; i++) dfs((node*) cur->childs[i + 1], m, idx);
-    }
-
-    void dfs() {
-        static map<node*, int> m;
-        static int idx = 0;
-        m.clear();
-        idx = 0;
-        dfs(root, m, idx);
-    }
-
     BPTree() : root{newNode()}, nodeCnt{0}, recordCnt{0} {}
 
     ~BPTree() {
@@ -619,6 +544,24 @@ public:
         return ret;
     }
 
+#ifdef DEBUG
+    void dfs(node *cur, map<node*, int> &m, int &idx) {
+        if(m[cur] == 0) m[cur] = ++idx;
+        cout << "[" << m[cur] << "]" << *cur;
+        if(cur->height == 0) return;
+        dfs((node*) cur->childs[0], m, idx);
+        for(int i = 0; i < cur->cnt; i++) dfs((node*) cur->childs[i + 1], m, idx);
+    }
+
+    void dfs() {
+        static map<node*, int> m;
+        static int idx = 0;
+        m.clear();
+        idx = 0;
+        dfs(root, m, idx);
+    }
+
+
     bool selfCheck(node *cur) {
         if(cur->height == 0) { // leaf check
             if(cur != root && cur->cnt < (N + 1) / 2) return false; // cnt check
@@ -652,5 +595,49 @@ public:
         }
         return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
+
+    void levelTraverse(node *cur) const {
+        queue<node *> q;
+        q.push(cur);
+        int sz = 1;
+        while (q.size()) {
+            int nxt = 0;
+            for (int i = 1; i <= sz; i++) {
+                node *frt = q.front();
+                q.pop();
+                cout << *frt;
+                if (frt->height == 0) continue;
+                for (int j = 0; j <= frt->cnt; j++) {
+                    q.push((node *) frt->childs[j]);
+                    nxt++;
+                }
+            }
+            cout << endl;
+            sz = nxt;
+        }
+    }
+    // for debugging
+    void levelTraverse() const {
+        queue<node *> q;
+        q.push(root);
+        int sz = 1;
+        while (q.size()) {
+            int nxt = 0;
+            for (int i = 1; i <= sz; i++) {
+                node *frt = q.front();
+                q.pop();
+                cout << *frt;
+                if (frt->height == 0) continue;
+                for (int j = 0; j <= frt->cnt; j++) {
+                    q.push((node *) frt->childs[j]);
+                    nxt++;
+                }
+            }
+            cout << endl;
+            sz = nxt;
+        }
+    }
+#endif
+
 };
 #endif //BPTREE_BPTREE_H
