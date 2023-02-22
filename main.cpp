@@ -1,10 +1,14 @@
 #include <iostream>
+#include <set>
+#include <vector>
+#include <cstdlib>
+#include <cassert>
 #include "BPTree.h"
 
 // num of children
 const int N = 10;
 
-using tree= BPTree<int, int, N>;
+using tree = BPTree<int, int, N>;
 using node = tree::node;
 
 vector<int> getAllFromZero(const tree &tr) {
@@ -13,11 +17,11 @@ vector<int> getAllFromZero(const tree &tr) {
     auto tmp = tr.lower_bound(-1);
     int i = tmp.second;
     node *p = tmp.first;
-    while(p) {
-        for(; i < p->cnt; i++) {
+    while (p) {
+        for (; i < p->cnt; i++) {
             a.push_back(p->keys[i]);
         }
-        p = (node*)p->childs[N];
+        p = (node *) p->childs[N];
         i = 0;
     }
     return a;
@@ -30,7 +34,7 @@ void functionalTest() {
     tree tr;
     multiset<int> s; // to simulate tree
 
-    cout << "try " << n << " random insertions and then "<< n << " deletions:" << endl;
+    cout << "try " << n << " random insertions and then " << n << " deletions:" << endl;
     for (int i = 1; i <= n; i++) {
         int num = rand() % range;
         tr.insert(num, num);
@@ -51,9 +55,9 @@ void functionalTest() {
         bool deleted = tr.remove(a[id]);
         assert(tr.selfCheck());
         bool _deleted = s.contains(a[id]);
-        if(deleted != _deleted) cout << a[id] << endl;
+        if (deleted != _deleted) cout << a[id] << endl;
         assert(deleted == _deleted);
-        if(_deleted == true) s.erase(s.find(a[id]));
+        if (_deleted) s.erase(s.find(a[id]));
     }
     cout << "tree survives after " << n << " deletions" << endl;
     cout << "tree height: " << tr.height() << endl;
@@ -72,22 +76,22 @@ void randomTest() {
 
     cout << n << " random operations" << endl;
 
-    for(int i = 1; i <= n; i++) {
+    for (int i = 1; i <= n; i++) {
         int op = rand() % 2;
-        if(op == 0) { // insert
+        if (op == 0) { // insert
             int num = rand() % range;
             tr.insert(num, num);
             b.push_back(num);
             s.insert(num);
         } else {
-            if(b.size() == 0) continue;
+            if (b.size() == 0) continue;
             int id = rand() % ((int) b.size());
             bool deleted = tr.remove(b[id]);
             bool _deleted = s.contains(b[id]);
 
             assert(deleted == _deleted);
 
-            if(_deleted) s.erase(s.find(b[id]));
+            if (_deleted) s.erase(s.find(b[id]));
         }
         assert(tr.selfCheck());
     }

@@ -1,9 +1,15 @@
 #ifndef BPTREE_BPTREE_H
 #define BPTREE_BPTREE_H
 
-#include "bits/stdc++.h"
-
 #define DEBUG
+
+#include <map>
+#include <queue>
+#include <vector>
+#include <ostream>
+#include <cassert>
+
+#include <string>
 
 using namespace std;
 
@@ -438,9 +444,11 @@ private:
         } else if (status == 0) { // child might modify keys
             if (i >= 0) _updateKey(cur, i);
             return 0;
-        } else if (status == 1) { // merged _cur -> _lSib and delete _cur, need to delete i-th key and update key accordingly
+        } else if (status ==
+                   1) { // merged _cur -> _lSib and delete _cur, need to delete i-th key and update key accordingly
             return _removeAtInternal(lSib, pKeyCur, cur, pKeyRSib, rSib, i);
-        } else if (status == 2) { // merged _rSib -> _cur and delete _rSib, need to delete i+1 -th key update key accordingly
+        } else if (status ==
+                   2) { // merged _rSib -> _cur and delete _rSib, need to delete i+1 -th key update key accordingly
             return _removeAtInternal(lSib, pKeyCur, cur, pKeyRSib, rSib, i + 1);
         }
         // should never reach here
