@@ -22,7 +22,7 @@ public:
         void *childs[N + 1];
         int cnt, height;
 
-        node(): cnt{0}, height{0} {
+        node() : cnt{0}, height{0} {
             childs[N] = nullptr;
         }
 
@@ -549,6 +549,20 @@ public:
             }
             p = (node *) p->childs[N];
             i = 0;
+        }
+        return ret;
+    }
+
+    vector<_record *> getAll() const {
+        vector<_record *> ret;
+        node *p = root;
+        while (p->height != 0) p = (node *) p->childs[0];
+        while (p) {
+            int i = 0;
+            for (; i < p->cnt; i++) {
+                ret.push_back((_record *) p->childs[i]);
+            }
+            p = (node *) p->childs[N];
         }
         return ret;
     }
