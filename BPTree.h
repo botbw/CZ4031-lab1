@@ -470,7 +470,7 @@ private:
     }
 
 public:
-    BPTree() : root{newNode()}, nodeCnt{0}, recordCnt{0} {}
+    BPTree() : nodeCnt{0}, recordCnt{0}, root{newNode()} {}
 
     ~BPTree() {
         _destruct(root);

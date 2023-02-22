@@ -1,12 +1,84 @@
+#include <fstream>
 #include <iostream>
+#include <string>
+#include <vector>
+#include "bits/stdc++.h"
 #include "BPTree.h"
+
+#pragma pack(1)
+struct _key {
+    unsigned int key: 24;
+    bool operator<(const _key &b) const {
+        return key < b.key;
+    }
+    string to_string(const _key &b) const {
+        int key_int  = b.key;
+        stringstream temp;
+        temp<<key_int;
+        return temp.str();
+    }
+    friend std::ostream& operator << ( std::ostream& os, const _key& b ) {
+        int key_int  = b.key;
+        os << key_int;
+        return os;
+    }
+};
+#pragma pack(0)
+
+#pragma pack(1)
+struct _record {
+    unsigned int tConst: 24;
+    unsigned int rating: 8;
+    unsigned int numVotes: 24;
+};
+#pragma pack(0)
 
 // num of children
 const int N = 10;
 
-using tree= BPTree<int, int, N>;
+using tree= BPTree<_key, _record, N>;
 using node = tree::node;
 
+
+tree* constructTreeFromTsv(string filename){
+    cout << "enter here 0" << "\n";
+    tree* trp = new tree();
+
+    ifstream fin(filename);
+    string line;
+    getline(fin, line);
+    
+    int max_numVotes = 0;
+    int max_tconst = 0;
+    cout << "enter here 1" << "\n";
+    while (getline(fin, line)) {
+        istringstream is(line);
+        string tconst_str;
+        string rating_str;
+        int numVotes_full = 0;
+        getline( is, tconst_str, '\t' );
+        getline( is, rating_str, '\t' );
+        is >> numVotes_full; 
+
+        int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
+        int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
+
+        struct _key skey = {numVotes_full};
+        struct _record srecord = {tconst_full, rating_full, numVotes_full};
+        trp->insert(skey, srecord);
+
+        max_numVotes = max(max_numVotes, numVotes_full);
+        max_tconst = max(max_tconst, tconst_full);
+
+    }
+    fin.close();
+
+    cout << "max_numVotes = " << max_numVotes << ", max_tconst = " << max_tconst << "\n";
+
+    return trp;
+}
+
+/*
 vector<int> getAllFromZero(const tree &tr) {
     vector<int> a;
     // get [0, inf) into a
@@ -97,11 +169,21 @@ void randomTest() {
     tr.levelTraverse();
     cout << "pass" << endl;
 }
+*/
 
+signed main() {
+    //srand(time(NULL));
+    //functionalTest();
+    //randomTest();
+    ios::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+    DEBUG(sizeof(_record));
 
-int main() {
-    srand(time(NULL));
-    functionalTest();
-    randomTest();
+    cout << "start \n";
+    tree* trp = constructTreeFromTsv("data.tsv");
+    cout << "tree height: " << trp->height() << endl;
+    cout << "tree structure" << endl;
+    trp->levelTraverse();
+    cout << "pass" << endl;
     return 0;
+    
 }
