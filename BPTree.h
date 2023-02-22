@@ -51,10 +51,9 @@ public:
 
 private:
     node *root;
-    // node number of current tree
-    int nodeCnt;
-    // recordNumber
-    int recordCnt;
+    int nodeCnt;    // node number of current tree
+    int recordCnt;    // record number of current tree
+
 
     // only for single node
     node *newNode() {
