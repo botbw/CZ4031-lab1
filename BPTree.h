@@ -8,7 +8,6 @@
 #include <vector>
 #include <ostream>
 #include <cassert>
-
 #include <string>
 
 using namespace std;
@@ -22,6 +21,10 @@ public:
         // childs[i] is _record* or node*
         void *childs[N + 1];
         int cnt, height;
+
+        node(): cnt{0}, height{0} {
+            childs[N] = nullptr;
+        }
 
         // for debugging
         friend ostream &operator<<(ostream &os, const node &n) {
@@ -59,11 +62,11 @@ private:
         // TODO
         node *p = new node();
 #ifdef DEBUG
+        memset(p->keys, 0xcf, sizeof p->keys);
+        memset(p->childs, 0xcf, sizeof p->childs);
         p->cnt = 0;
         p->height = 0;
         p->childs[N] = 0;
-        memset(p->keys, 0, sizeof p->keys);
-        memset(p->childs, 0, sizeof p->childs);
 #endif
         return p;
     }
@@ -534,7 +537,7 @@ public:
 
     // query [lo, hi)
     vector<_record *> query(const _key &lo, const _key &hi) const {
-        assert(lo < hi);
+        assert(lo <= hi);
         pair<node *, int> q = lower_bound(root, lo);
         node *p = q.first;
         int i = q.second;
@@ -627,24 +630,7 @@ public:
 
     // for debugging
     void levelTraverse() const {
-        queue<node *> q;
-        q.push(root);
-        int sz = 1;
-        while (q.size()) {
-            int nxt = 0;
-            for (int i = 1; i <= sz; i++) {
-                node *frt = q.front();
-                q.pop();
-                cout << *frt;
-                if (frt->height == 0) continue;
-                for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *) frt->childs[j]);
-                    nxt++;
-                }
-            }
-            cout << endl;
-            sz = nxt;
-        }
+        levelTraverse(root);
     }
 
 #endif

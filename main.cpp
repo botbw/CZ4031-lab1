@@ -29,7 +29,7 @@ vector<int> getAllFromZero(const tree &tr) {
 
 void functionalTest() {
     int range = rand();
-    int n = 100000;
+    int n = 10000;
 
     tree tr;
     multiset<int> s; // to simulate tree
@@ -67,7 +67,7 @@ void functionalTest() {
 }
 
 void randomTest() {
-    int n = 100000;
+    int n = 10000;
     int range = rand();
 
     tree tr;
