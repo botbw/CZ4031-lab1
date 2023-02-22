@@ -1,12 +1,8 @@
-//
-// Created by haoxuanwang on 20/2/23.
-//
-
 #ifndef BPTREE_DISK_HPP
 #define BPTREE_DISK_HPP
 
 #include "Block.h"
-#include "unordered_map"
+#include <unordered_map>
 
 const int MEM_TOTAL = 500 * 1024 * 1024;
 const int MEM_NODE = 200 * 1024 * 1024;

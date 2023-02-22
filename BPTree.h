@@ -1,9 +1,14 @@
 #ifndef BPTREE_BPTREE_H
 #define BPTREE_BPTREE_H
 
-#include "bits/stdc++.h"
-
 #define DEBUG
+
+#include <map>
+#include <queue>
+#include <vector>
+#include <ostream>
+#include <cassert>
+#include <string>
 
 using namespace std;
 
@@ -16,6 +21,10 @@ public:
         // childs[i] is _record* or node*
         void *childs[N + 1];
         int cnt, height;
+
+        node() : cnt{0}, height{0} {
+            childs[N] = nullptr;
+        }
 
         // for debugging
         friend ostream &operator<<(ostream &os, const node &n) {
@@ -42,10 +51,9 @@ public:
 
 private:
     node *root;
-    // node number of current tree
-    int nodeCnt;
-    // recordNumber
-    int recordCnt;
+    int nodeCnt;    // node number of current tree
+    int recordCnt;    // record number of current tree
+
 
     // only for single node
     node *newNode() {
@@ -53,11 +61,11 @@ private:
         // TODO
         node *p = new node();
 #ifdef DEBUG
+        memset(p->keys, 0xcf, sizeof p->keys);
+        memset(p->childs, 0xcf, sizeof p->childs);
         p->cnt = 0;
         p->height = 0;
         p->childs[N] = 0;
-        memset(p->keys, 0, sizeof p->keys);
-        memset(p->childs, 0, sizeof p->childs);
 #endif
         return p;
     }
@@ -438,9 +446,11 @@ private:
         } else if (status == 0) { // child might modify keys
             if (i >= 0) _updateKey(cur, i);
             return 0;
-        } else if (status == 1) { // merged _cur -> _lSib and delete _cur, need to delete i-th key and update key accordingly
+        } else if (status ==
+                   1) { // merged _cur -> _lSib and delete _cur, need to delete i-th key and update key accordingly
             return _removeAtInternal(lSib, pKeyCur, cur, pKeyRSib, rSib, i);
-        } else if (status == 2) { // merged _rSib -> _cur and delete _rSib, need to delete i+1 -th key update key accordingly
+        } else if (status ==
+                   2) { // merged _rSib -> _cur and delete _rSib, need to delete i+1 -th key update key accordingly
             return _removeAtInternal(lSib, pKeyCur, cur, pKeyRSib, rSib, i + 1);
         }
         // should never reach here
@@ -460,6 +470,7 @@ private:
 
     // search lower_bound according to key (the first record_key >= key)
     pair<node *, int> _lower_bound(node *cur, const _key &key) const {
+        assert(false); // might be buggy, 需要详细讨论下重复key情况
         int i =
                 (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         // leaf node
@@ -525,7 +536,7 @@ public:
 
     // query [lo, hi)
     vector<_record *> query(const _key &lo, const _key &hi) const {
-        assert(lo < hi);
+        assert(lo <= hi);
         pair<node *, int> q = lower_bound(root, lo);
         node *p = q.first;
         int i = q.second;
@@ -538,6 +549,20 @@ public:
             }
             p = (node *) p->childs[N];
             i = 0;
+        }
+        return ret;
+    }
+
+    vector<_record *> getAll() const {
+        vector<_record *> ret;
+        node *p = root;
+        while (p->height != 0) p = (node *) p->childs[0];
+        while (p) {
+            int i = 0;
+            for (; i < p->cnt; i++) {
+                ret.push_back((_record *) p->childs[i]);
+            }
+            p = (node *) p->childs[N];
         }
         return ret;
     }
@@ -618,24 +643,7 @@ public:
 
     // for debugging
     void levelTraverse() const {
-        queue<node *> q;
-        q.push(root);
-        int sz = 1;
-        while (q.size()) {
-            int nxt = 0;
-            for (int i = 1; i <= sz; i++) {
-                node *frt = q.front();
-                q.pop();
-                cout << *frt;
-                if (frt->height == 0) continue;
-                for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *) frt->childs[j]);
-                    nxt++;
-                }
-            }
-            cout << endl;
-            sz = nxt;
-        }
+        levelTraverse(root);
     }
 
 #endif
