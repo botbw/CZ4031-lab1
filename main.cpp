@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <unistd.h>
-
 #include "BPTree.h"
+
+using namespace std;
 
 #pragma pack(1)
 struct _key {
@@ -37,135 +37,93 @@ struct _record {
 #pragma pack(0)
 
 // num of children
-const int N = 10;
+const int N = 3;
 
-using tree= BPTree<_key, _record, N>;
+using tree = BPTree<int, int, N>;
 
 using node = tree::node;
 
-
-tree* constructTreeFromTsv(string filename){
-    cout << "enter here 0" << "\n";
-    tree* trp = new tree();
-
-    ifstream fin(filename);
-    string line;
-    getline(fin, line);
-    
-    unsigned int max_numVotes = 0;
-    unsigned int max_tconst = 0;
-    cout << "enter here 1" << "\n";
-    while (getline(fin, line)) {
-        istringstream is(line);
-        string tconst_str;
-        string rating_str;
-        unsigned int numVotes_full = 0;
-        getline( is, tconst_str, '\t' );
-        getline( is, rating_str, '\t' );
-        is >> numVotes_full; 
-
-        unsigned int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
-        unsigned int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
-
-        _key skey = {numVotes_full};
-        _record srecord = {tconst_full, rating_full, numVotes_full};
-        trp->insert(skey, srecord);
-
-        max_numVotes = max(max_numVotes, numVotes_full);
-        max_tconst = max(max_tconst, tconst_full);
-
-    }
-    fin.close();
-
-    cout << "max_numVotes = " << max_numVotes << ", max_tconst = " << max_tconst << "\n";
-
-    return trp;
-}
-
-/*
-vector<int> getAllFromZero(const tree &tr) {
-    vector<int> a;
-    // get [0, inf) into a
-    auto tmp = tr.lower_bound(-1);
-    int i = tmp.second;
-    node *p = tmp.first;
-    while (p) {
-        for (; i < p->cnt; i++) {
-            a.push_back(p->keys[i]);
-        }
-        p = (node *) p->childs[N];
-        i = 0;
-    }
-    return a;
-}
-
-void functionalTest() {
-    int range = rand();
-    int n = 10000;
-
-    tree tr;
-    multiset<int> s; // to simulate tree
-
-    cout << "try " << n << " random insertions and then " << n << " deletions:" << endl;
-    for (int i = 1; i <= n; i++) {
-        int num = rand() % range;
-        tr.insert(num, num);
-//        tr.levelTraverse();
-        assert(tr.selfCheck());
-        s.insert(num);
-    }
-
-    vector<int> a = getAllFromZero(tr);
-    vector<int> b(s.begin(), s.end());
-    assert(a == b);
-
-    cout << "tree survives after " << n << " insertions" << endl;
-    cout << "tree height: " << tr.height() << endl;
-
-    for (int i = 1; i <= n; i++) {
-        int id = rand() % ((int) a.size());
-        bool deleted = tr.remove(a[id]);
-        assert(tr.selfCheck());
-        bool _deleted = s.contains(a[id]);
-        if (deleted != _deleted) cout << a[id] << endl;
-        assert(deleted == _deleted);
-        if (_deleted) s.erase(s.find(a[id]));
-    }
-    cout << "tree survives after " << n << " deletions" << endl;
-    cout << "tree height: " << tr.height() << endl;
-    cout << "tree structure" << endl;
-    tr.levelTraverse();
-    cout << "pass\n";
-}
+//
+//tree* constructTreeFromTsv(string filename){
+//    cout << "enter here 0" << "\n";
+//    tree* trp = new tree();
+//
+//    ifstream fin(filename);
+//    string line;
+//    getline(fin, line);
+//
+//    unsigned int max_numVotes = 0;
+//    unsigned int max_tconst = 0;
+//    cout << "enter here 1" << "\n";
+//    while (getline(fin, line)) {
+//        istringstream is(line);
+//        string tconst_str;
+//        string rating_str;
+//        unsigned int numVotes_full = 0;
+//        getline( is, tconst_str, '\t' );
+//        getline( is, rating_str, '\t' );
+//        is >> numVotes_full;
+//
+//        unsigned int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
+//        unsigned int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
+//
+//        _key skey = {numVotes_full};
+//        _record srecord = {tconst_full, rating_full, numVotes_full};
+//        trp->insert(skey, srecord);
+//
+//        max_numVotes = max(max_numVotes, numVotes_full);
+//        max_tconst = max(max_tconst, tconst_full);
+//
+//    }
+//    fin.close();
+//
+//    cout << "max_numVotes = " << max_numVotes << ", max_tconst = " << max_tconst << "\n";
+//
+//    return trp;
+//}
 
 void randomTest() {
-    int n = 10000;
+    int n = 50000;
     int range = rand();
 
     tree tr;
     vector<int> b; // to store inserted keys
-    multiset<int> s; // to simulate deletions
+    multiset<int> s; // to simulate the BPTree
 
-    cout << n << " random operations" << endl;
+    cout << n << " random operations (insert, delete, query)" << endl;
 
     for (int i = 1; i <= n; i++) {
-        int op = rand() % 2;
+        int op = rand() % 3;
         if (op == 0) { // insert
             int num = rand() % range;
             tr.insert(num, num);
             b.push_back(num);
             s.insert(num);
-        } else {
+            assert(tr.selfCheck());
+        } else if(op == 1) { // delete
             if (b.size() == 0) continue;
             int id = rand() % ((int) b.size());
             bool deleted = tr.remove(b[id]);
             bool _deleted = s.contains(b[id]);
-
-            assert(deleted == _deleted);
-
             if (_deleted) s.erase(s.find(b[id]));
+            assert(deleted == _deleted);
+            assert(tr.selfCheck());
+        } else { // query
+            if (b.size() == 0) continue;
+            int id1 = rand() % ((int) b.size());
+            int id2 = rand() % ((int) b.size());
+            int lo = min(b[id1], b[id2]);
+            int hi = max(b[id1], b[id2]);
+            auto tmp = tr.query(lo, hi); // [lo, hi]
+            vector<int> q1;
+            for(auto p : tmp) {
+                q1.push_back(*p);
+            }
+            auto it1 = s.lower_bound(lo), it2 = s.upper_bound(hi);
+            vector<int> q2(it1, it2);
+            assert(q1 == q2);
         }
-        assert(tr.selfCheck());
+
     }
     cout << "tree survives after " << n << " operations" << endl;
     cout << "tree height: " << tr.height() << endl;
@@ -173,18 +131,20 @@ void randomTest() {
     tr.levelTraverse();
     cout << "pass" << endl;
 }
-*/
 
 int main() {
     //srand(time(NULL));
-    //functionalTest();
-    //randomTest();
-    cout << "start \n";
-    tree* trp = constructTreeFromTsv("../data.tsv");
-    cout << "tree height: " << trp->height() << endl;
-    cout << "tree structure" << endl;
-    trp->levelTraverse();
-    cout << "pass" << endl;
+
+    randomTest();
+    BPTree<string, string, 3> tr;
+    tr.insert("nihao", "wobuhao");
+    tr.insert("haha", "heihei");
+    tr.insert("aldsjfldsafj", "hadsfsdafeihei");
+    tr.insert("1213fdsa", "2134");
+    tr.insert("d123", "adsfn");
+
+    tr.levelTraverse();
+
     return 0;
     
 }

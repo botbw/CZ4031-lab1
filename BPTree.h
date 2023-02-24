@@ -23,7 +23,16 @@ public:
         int cnt, height;
 
         node() : cnt{0}, height{0} {
+#ifdef DEBUG
+            memset(childs, 0xcf, sizeof childs);
+#endif
             childs[N] = nullptr;
+        }
+
+        ~node() {
+#ifdef DEBUG
+            memset(childs, 0x3f, sizeof(childs));
+#endif
         }
 
         // for debugging
@@ -61,23 +70,12 @@ private:
         nodeCnt++;
         // TODO
         node *p = new node();
-#ifdef DEBUG
-        memset(p->keys, 0xcf, sizeof p->keys);
-        memset(p->childs, 0xcf, sizeof p->childs);
-        p->cnt = 0;
-        p->height = 0;
-        p->childs[N] = 0;
-#endif
         return p;
     }
 
     // only for single node
     void deleteNode(node *p) {
         nodeCnt--;
-#ifdef DEBUG
-        memset(p->keys, 0x3f, sizeof p->keys);
-        memset(p->childs, 0x3f, sizeof(p->childs));
-#endif
         // TODO
         delete p;
     }
@@ -307,12 +305,12 @@ private:
                 lSib->keys[lSib->cnt - 1] = cur->keys[j];
                 lSib->childs[lSib->cnt - 1] = cur->childs[j];
             }
-            lSib->childs[N] = rSib;
+            lSib->childs[N] = cur->childs[N];
             deleteNode(cur);
             return 1;
         }
 
-        // merge cur into rSib
+        // merge rSib into cur
         if (rSib) {
             for (int j = 0; j < rSib->cnt; j++) {
                 cur->cnt++;
@@ -471,14 +469,18 @@ private:
 
     // search lower_bound according to key (the first record_key >= key)
     pair<node *, int> _lower_bound(node *cur, const _key &key) const {
-        assert(false); // might be buggy, 需要详细讨论下重复key情况
         int i =
                 (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
-        // leaf node
-        if (cur->height == 0) return pair<node *, int>(cur, i);
-        // non leaf
-        if (i >= cur->cnt || key < cur->keys[i]) i--;
-        return _lower_bound((node *) cur->childs[i + 1], key);
+        if (cur->height == 0) { // leaf node
+            if(i == cur->cnt) return pair<node *, int>(nullptr, -1);
+            return pair<node *, int>(cur, i);
+        } else { // non leaf
+            if(i == cur->cnt) i--;
+            pair<node *, int> leftSib = _lower_bound((node*) cur->childs[i], key);
+            if(leftSib.first) return leftSib;
+            return _lower_bound((node*) cur->childs[i + 1], key);
+        }
+
     }
 
 public:
@@ -535,17 +537,18 @@ public:
         return (_record *) p->childs[i];
     }
 
-    // query [lo, hi)
+    // query [lo, hi]
     vector<_record *> query(const _key &lo, const _key &hi) const {
         assert(lo <= hi);
-        pair<node *, int> q = lower_bound(root, lo);
+        pair<node *, int> q = lower_bound(lo);
         node *p = q.first;
         int i = q.second;
 
         vector<_record *> ret;
 
-        while (p && p->keys[i] < hi) {
+        while (p) {
             for (; i < p->cnt; i++) {
+                if(p->keys[i] > hi) return ret;
                 ret.push_back((_record *) p->childs[i]);
             }
             p = (node *) p->childs[N];
@@ -569,7 +572,6 @@ public:
     }
 
 #ifdef DEBUG
-
     void dfs(node *cur, map<node *, int> &m, int &idx) {
         if (m[cur] == 0) m[cur] = ++idx;
         cout << "[" << m[cur] << "]" << *cur;
@@ -588,6 +590,8 @@ public:
 
 
     bool selfCheck(node *cur) {
+        if(cur->cnt > N)
+            return false;
         if (cur->height == 0) { // leaf check
             if (cur != root && cur->cnt < (N + 1) / 2) return false; // cnt check
             if (!is_sorted(cur->keys, cur->keys + cur->cnt)) return false; // order check
@@ -602,10 +606,10 @@ public:
             node *p = (node *) cur->childs[i + 1];
             while (p->height != 0) p = (node *) p->childs[0];
             if (cur->keys[i] != p->keys[0]) return false;
-            p = (node*) cur->childs[i];
+            p = (node *) cur->childs[i];
 
-            while(p->height != 0) p = (node*) p->childs[p->cnt - 1];
-            if(p->keys[p->cnt - 1] > cur->keys[i]) return false;
+            while (p->height != 0) p = (node *) p->childs[p->cnt - 1];
+            if (p->keys[p->cnt - 1] > cur->keys[i]) return false;
             // check childs
             if (!selfCheck(p)) return false;
         }
