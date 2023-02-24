@@ -53,20 +53,20 @@ tree* constructTreeFromTsv(string filename){
     string line;
     getline(fin, line);
     
-    int max_numVotes = 0;
-    int max_tconst = 0;
+    unsigned int max_numVotes = 0;
+    unsigned int max_tconst = 0;
     cout << "enter here 1" << "\n";
     while (getline(fin, line)) {
         istringstream is(line);
         string tconst_str;
         string rating_str;
-        int numVotes_full = 0;
+        unsigned int numVotes_full = 0;
         getline( is, tconst_str, '\t' );
         getline( is, rating_str, '\t' );
         is >> numVotes_full; 
 
-        int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
-        int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
+        unsigned int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
+        unsigned int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
 
         struct _key skey = {numVotes_full};
         struct _record srecord = {tconst_full, rating_full, numVotes_full};
