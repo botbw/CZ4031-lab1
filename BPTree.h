@@ -590,6 +590,7 @@ public:
     bool selfCheck(node *cur) {
         if (cur->height == 0) { // leaf check
             if (cur != root && cur->cnt < (N + 1) / 2) return false; // cnt check
+            if (!is_sorted(cur->childs, cur->childs + cur->cnt)) return false;
             // siblings check will be done by checking order
             return true;
         }

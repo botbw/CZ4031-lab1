@@ -4,8 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <cstdlib>
-#include <cassert>
+#include <unistd.h>
 
 #include "BPTree.h"
 
@@ -68,8 +67,8 @@ tree* constructTreeFromTsv(string filename){
         unsigned int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
         unsigned int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
 
-        struct _key skey = {numVotes_full};
-        struct _record srecord = {tconst_full, rating_full, numVotes_full};
+        _key skey = {numVotes_full};
+        _record srecord = {tconst_full, rating_full, numVotes_full};
         trp->insert(skey, srecord);
 
         max_numVotes = max(max_numVotes, numVotes_full);
@@ -181,7 +180,7 @@ int main() {
     //functionalTest();
     //randomTest();
     cout << "start \n";
-    tree* trp = constructTreeFromTsv("data.tsv");
+    tree* trp = constructTreeFromTsv("../data.tsv");
     cout << "tree height: " << trp->height() << endl;
     cout << "tree structure" << endl;
     trp->levelTraverse();
