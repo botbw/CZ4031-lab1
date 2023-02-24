@@ -602,10 +602,11 @@ public:
             node *p = (node *) cur->childs[i + 1];
             while (p->height != 0) p = (node *) p->childs[0];
             if (cur->keys[i] != p->keys[0]) return false;
-            // check childs
             p = (node*) cur->childs[i];
+
             while(p->height != 0) p = (node*) p->childs[p->cnt - 1];
-            if(p->keys[p->cnt - 1] > cur->keys[i]);
+            if(p->keys[p->cnt - 1] > cur->keys[i]) return false;
+            // check childs
             if (!selfCheck(p)) return false;
         }
         return true;
