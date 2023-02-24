@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "bits/stdc++.h"
 #include <set>
 #include <cstdlib>
 #include <cassert>
@@ -176,13 +175,10 @@ void randomTest() {
 }
 */
 
-signed main() {
+int main() {
     //srand(time(NULL));
     //functionalTest();
     //randomTest();
-    ios::sync_with_stdio(0);cin.tie(0);cout.tie(0);
-    DEBUG(sizeof(_record));
-
     cout << "start \n";
     tree* trp = constructTreeFromTsv("data.tsv");
     cout << "tree height: " << trp->height() << endl;
