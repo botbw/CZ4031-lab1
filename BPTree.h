@@ -1,8 +1,6 @@
 #ifndef BPTREE_BPTREE_H
 #define BPTREE_BPTREE_H
 
-#define DEBUG
-
 #include <map>
 #include <queue>
 #include <vector>
@@ -64,11 +62,10 @@ private:
     node *root; // root of the tree
 
 
-
     // only for single node
     node *newNode() {
         nodeCnt++;
-        // TODO
+        // get from memory
         node *p = new node();
         return p;
     }
@@ -76,21 +73,21 @@ private:
     // only for single node
     void deleteNode(node *p) {
         nodeCnt--;
-        // TODO
+        // free memory
         delete p;
     }
 
     // only for single node
     _record *newRecord(const _record &r) {
         recordCnt++;
-        // TODO, need copy constructor of record
+        // TODO get from disk
         return new _record(r);
     }
 
     // only for single node
     void deleteRecord(_record *p) {
         recordCnt--;
-        // TODO
+        // TODO free disk
         delete p;
     }
 
@@ -456,6 +453,23 @@ private:
         throw runtime_error("In _removeAtInternal: should never reach here");
     }
 
+
+    // search lower_bound according to key (the first record_key >= key)
+    pair<node *, int> _lower_bound(node *cur, const _key &key) const {
+        int i =
+                (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
+        if (cur->height == 0) { // leaf node
+            if (i == cur->cnt) return pair<node *, int>(nullptr, -1);
+            return pair<node *, int>(cur, i);
+        } else { // non leaf
+            if (i == cur->cnt) i--;
+            pair<node *, int> leftSib = _lower_bound((node *) cur->childs[i], key);
+            if (leftSib.first) return leftSib;
+            return _lower_bound((node *) cur->childs[i + 1], key);
+        }
+
+    }
+
     void _destruct(node *cur) {
         if (cur->height == 0) {
             deleteNode(cur);
@@ -465,22 +479,6 @@ private:
         for (int i = 0; i < cur->cnt; i++)
             _destruct((node *) cur->childs[i + 1]);
         deleteNode(cur);
-    }
-
-    // search lower_bound according to key (the first record_key >= key)
-    pair<node *, int> _lower_bound(node *cur, const _key &key) const {
-        int i =
-                (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
-        if (cur->height == 0) { // leaf node
-            if(i == cur->cnt) return pair<node *, int>(nullptr, -1);
-            return pair<node *, int>(cur, i);
-        } else { // non leaf
-            if(i == cur->cnt) i--;
-            pair<node *, int> leftSib = _lower_bound((node*) cur->childs[i], key);
-            if(leftSib.first) return leftSib;
-            return _lower_bound((node*) cur->childs[i + 1], key);
-        }
-
     }
 
 public:
@@ -495,6 +493,10 @@ public:
     int size() const { return recordCnt; }
 
     int nodeSize() const { return nodeCnt; }
+
+    node getRootCopy() const {
+        return *root;
+    }
 
     pair<node *, int> lower_bound(const _key &key) const {
         return _lower_bound(root, key);
@@ -548,7 +550,7 @@ public:
 
         while (p) {
             for (; i < p->cnt; i++) {
-                if(p->keys[i] > hi) return ret;
+                if (p->keys[i] > hi) return ret;
                 ret.push_back((_record *) p->childs[i]);
             }
             p = (node *) p->childs[N];
@@ -571,26 +573,35 @@ public:
         return ret;
     }
 
-#ifdef DEBUG
-    void dfs(node *cur, map<node *, int> &m, int &idx) {
-        if (m[cur] == 0) m[cur] = ++idx;
-        cout << "[" << m[cur] << "]" << *cur;
-        if (cur->height == 0) return;
-        dfs((node *) cur->childs[0], m, idx);
-        for (int i = 0; i < cur->cnt; i++) dfs((node *) cur->childs[i + 1], m, idx);
+
+    void levelTraverse(node *cur) const {
+        queue<node *> q;
+        q.push(cur);
+        int sz = 1;
+        while (q.size()) {
+            int nxt = 0;
+            for (int i = 1; i <= sz; i++) {
+                node *frt = q.front();
+                q.pop();
+                cout << *frt;
+                if (frt->height == 0) continue;
+                for (int j = 0; j <= frt->cnt; j++) {
+                    q.push((node *) frt->childs[j]);
+                    nxt++;
+                }
+            }
+            cout << endl;
+            sz = nxt;
+        }
     }
 
-    void dfs() {
-        static map<node *, int> m;
-        static int idx = 0;
-        m.clear();
-        idx = 0;
-        dfs(root, m, idx);
+    void levelTraverse() const {
+        levelTraverse(root);
     }
 
 
     bool selfCheck(node *cur) {
-        if(cur->cnt > N)
+        if (cur->cnt > N)
             return false;
         if (cur->height == 0) { // leaf check
             if (cur != root && cur->cnt < (N + 1) / 2) return false; // cnt check
@@ -631,34 +642,25 @@ public:
         return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
 
-    void levelTraverse(node *cur) const {
-        queue<node *> q;
-        q.push(cur);
-        int sz = 1;
-        while (q.size()) {
-            int nxt = 0;
-            for (int i = 1; i <= sz; i++) {
-                node *frt = q.front();
-                q.pop();
-                cout << *frt;
-                if (frt->height == 0) continue;
-                for (int j = 0; j <= frt->cnt; j++) {
-                    q.push((node *) frt->childs[j]);
-                    nxt++;
-                }
-            }
-            cout << endl;
-            sz = nxt;
-        }
+#ifdef DEBUG
+
+    void dfs(node *cur, map<node *, int> &m, int &idx) {
+        if (m[cur] == 0) m[cur] = ++idx;
+        cout << "[" << m[cur] << "]" << *cur;
+        if (cur->height == 0) return;
+        dfs((node *) cur->childs[0], m, idx);
+        for (int i = 0; i < cur->cnt; i++) dfs((node *) cur->childs[i + 1], m, idx);
     }
 
-    // for debugging
-    void levelTraverse() const {
-        levelTraverse(root);
+    void dfs() {
+        static map<node *, int> m;
+        static int idx = 0;
+        m.clear();
+        idx = 0;
+        dfs(root, m, idx);
     }
 
 #endif
-
 };
 
 #endif //BPTREE_BPTREE_H
