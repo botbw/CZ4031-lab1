@@ -590,18 +590,22 @@ public:
     bool selfCheck(node *cur) {
         if (cur->height == 0) { // leaf check
             if (cur != root && cur->cnt < (N + 1) / 2) return false; // cnt check
-            if (!is_sorted(cur->childs, cur->childs + cur->cnt)) return false;
+            if (!is_sorted(cur->keys, cur->keys + cur->cnt)) return false; // order check
             // siblings check will be done by checking order
             return true;
         }
         // node check
         if (cur != root && cur->cnt < N / 2) return false;
+        if (!is_sorted(cur->keys, cur->keys + cur->cnt)) return false;
         if (!selfCheck((node *) cur->childs[0])) return false;
         for (int i = 0; i < cur->cnt; i++) {
             node *p = (node *) cur->childs[i + 1];
             while (p->height != 0) p = (node *) p->childs[0];
             if (cur->keys[i] != p->keys[0]) return false;
             // check childs
+            p = (node*) cur->childs[i];
+            while(p->height != 0) p = (node*) p->childs[p->cnt - 1];
+            if(p->keys[p->cnt - 1] > cur->keys[i]);
             if (!selfCheck(p)) return false;
         }
         return true;
