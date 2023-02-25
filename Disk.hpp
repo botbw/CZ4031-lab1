@@ -21,8 +21,6 @@ private:
     char *pool = new char[poolSize];
     // total number of blocks
     const static int totalCnt = int(poolSize / sizeof(Block));
-    // true when the block is completely free, false when the block is partially/fully used
-    bool *empty = new bool[totalCnt];
     // check how much space is left of a block
     unordered_map<Block *, int> left;
     // from node to block
@@ -36,7 +34,6 @@ public:
         for (int i = 0; i < totalCnt; i++)
         {
             tempBlk = (Block *)pool + i;
-            empty[i] = true;
             left[tempBlk] = sizeof(Block);
         }
         curBlk = (Block *)pool;
@@ -64,9 +61,10 @@ public:
                 cout << "No enough space in disk" << endl;
                 exit(1);
             }
-            // assign the address
         }
-        T *ret = (T *)((char *)curBlk + curOffset);
+        // assign the address
+        T *ret = (T *)((char *)(curBlk) + curOffset);
+        curOffset += sizeof(T);
         left[curBlk] -= sizeof(T);
         blkOf[ret] = curBlk;
         return ret;
@@ -75,9 +73,9 @@ public:
     void
     deallocate(T *node)
     {
-        delete node;
         Block *blk = blkOf[node];
         left[blk] += sizeof(node);
+        delete node;
     }
 
     int countAccessed(vector<Block> node)
@@ -95,8 +93,11 @@ public:
         int cnt = 0;
         for (int i = 0; i < totalCnt; i++)
         {
-            if (!empty[i])
+            curBlk = (Block *)pool + i;
+            if (left[curBlk] == sizeof(Block))
+            {
                 cnt++;
+            }
         }
         return cnt;
     }
