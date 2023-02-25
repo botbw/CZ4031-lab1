@@ -106,8 +106,7 @@ void randomTest() {
             }
             int id = rand() % ((int) insertedVal.size());
             bool deleted = tr.remove(insertedVal[id]);
-            // if less than c++20 use sett.count
-            bool _deleted = sett.contains(insertedVal[id]);
+            bool _deleted = sett.count(insertedVal[id]);
             if (_deleted) sett.erase(sett.find(insertedVal[id]));
             assert(deleted == _deleted);
             assert(tr.selfCheck());
