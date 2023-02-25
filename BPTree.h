@@ -128,31 +128,31 @@ private:
     //
     // if split happened return the new node ptr
     // return nullptr
-    node *_insertAtLeaf(node *ch1, const _key &key, const _record &record)
+    node *_insertAtLeaf(node *cur, const _key &key, const _record &record)
     {
         // insert at index i
         int i =
-            (int)(upper_bound(ch1->keys, ch1->keys + ch1->cnt, key) - ch1->keys);
-        if (ch1->cnt < N)
+            (int)(upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
+        if (cur->cnt < N)
         { // leaf is not full
-            ch1->cnt++;
-            for (int j = ch1->cnt - 1; j > i; j--)
+            cur->cnt++;
+            for (int j = cur->cnt - 1; j > i; j--)
             {
-                ch1->keys[j] = ch1->keys[j - 1];
-                ch1->childs[j] = ch1->childs[j - 1];
+                cur->keys[j] = cur->keys[j - 1];
+                cur->childs[j] = cur->childs[j - 1];
             }
-            ch1->keys[i] = key;
-            ch1->childs[i] = (void *)newRecord(record);
+            cur->keys[i] = key;
+            cur->childs[i] = (void *)newRecord(record);
             // no split
             return nullptr;
         }
-        node *ch2 = newNode();
-        void *ch3 = ch1->childs[N];
+        node *newCh = newNode();
+        void *curLeftSib = cur->childs[N];
         _key tmpKey[N + 1];
         void *tmpChild[N + 2];
-        // copy of ch1
-        memcpy(tmpKey, ch1->keys, sizeof(ch1->keys));
-        memcpy(tmpChild, ch1->childs, sizeof(ch1->childs));
+        // copy of cur
+        memcpy(tmpKey, cur->keys, sizeof(cur->keys));
+        memcpy(tmpChild, cur->childs, sizeof(cur->childs));
 
         // insert new key and record
         for (int j = N; j > i; j--)
@@ -163,53 +163,53 @@ private:
         tmpKey[i] = key;
         tmpChild[i] = (void *)newRecord(record);
 
-        // write to ch1 and ch2
-        ch1->cnt = (N + 1) / 2;
-        for (int j = 0; j < ch1->cnt; j++)
+        // write to cur and newCh
+        cur->cnt = (N + 1) / 2;
+        for (int j = 0; j < cur->cnt; j++)
         {
-            ch1->keys[j] = tmpKey[j];
-            ch1->childs[j] = tmpChild[j];
+            cur->keys[j] = tmpKey[j];
+            cur->childs[j] = tmpChild[j];
         }
-        ch2->cnt = (N + 1) - ch1->cnt;
-        for (int j = 0; j < ch2->cnt; j++)
+        newCh->cnt = (N + 1) - cur->cnt;
+        for (int j = 0; j < newCh->cnt; j++)
         {
-            ch2->keys[j] = tmpKey[j + ch1->cnt];
-            ch2->childs[j] = tmpChild[j + ch1->cnt];
+            newCh->keys[j] = tmpKey[j + cur->cnt];
+            newCh->childs[j] = tmpChild[j + cur->cnt];
         }
-        // connect siblings ch1 -> ch2 -> ch3;
-        ch2->childs[N] = ch3;
-        ch1->childs[N] = (void *)ch2;
-        return ch2;
+        // connect siblings cur -> newCh -> curLeftSib;
+        newCh->childs[N] = curLeftSib;
+        cur->childs[N] = (void *)newCh;
+        return newCh;
     }
 
     // insert node ptr at internal node
     //
     // if split happened return parent ptr
     // else return nullptr
-    node *_insertAtInternal(node *ch1, int i, const _key &key, node *ptr)
+    node *_insertAtInternal(node *cur, int i, const _key &key, node *ptr)
     {
         // insert at index i
-        if (ch1->cnt < N)
+        if (cur->cnt < N)
         { // node is not full
-            ch1->cnt++;
-            for (int j = ch1->cnt - 1; j > i; j--)
+            cur->cnt++;
+            for (int j = cur->cnt - 1; j > i; j--)
             {
-                ch1->keys[j] = ch1->keys[j - 1];
-                ch1->childs[j + 1] = ch1->childs[j];
+                cur->keys[j] = cur->keys[j - 1];
+                cur->childs[j + 1] = cur->childs[j];
             }
-            ch1->keys[i] = key;
-            ch1->childs[i + 1] = ptr;
+            cur->keys[i] = key;
+            cur->childs[i + 1] = ptr;
 
-            _updateHeight(ch1);
+            _updateHeight(cur);
             return nullptr;
         }
-        // node is full, need to split node into ch1 ch2
-        node *ch2 = newNode();
+        // node is full, need to split node into cur newCh
+        node *newCh = newNode();
         _key tmpKey[N + 1];
         void *tmpChilds[N + 2];
-        // copy of ch1
-        memcpy(tmpKey, ch1->keys, sizeof(ch1->keys));
-        memcpy(tmpChilds, ch1->childs, sizeof(ch1->childs));
+        // copy of cur
+        memcpy(tmpKey, cur->keys, sizeof(cur->keys));
+        memcpy(tmpChilds, cur->childs, sizeof(cur->childs));
 
         // insert new key and record
         for (int j = N; j > i; j--)
@@ -223,26 +223,26 @@ private:
         // took the (N + 1)/2 th key and pointer
         void *ch2Child = tmpChilds[(N + 1) / 2 + 1];
 
-        // write to ch1 and ch2
-        ch1->cnt = (N + 1) / 2;
-        ch1->childs[0] = tmpChilds[0];
-        for (int j = 0; j < ch1->cnt; j++)
+        // write to cur and newCh
+        cur->cnt = (N + 1) / 2;
+        cur->childs[0] = tmpChilds[0];
+        for (int j = 0; j < cur->cnt; j++)
         {
-            ch1->keys[j] = tmpKey[j];
-            ch1->childs[j + 1] = tmpChilds[j + 1];
+            cur->keys[j] = tmpKey[j];
+            cur->childs[j + 1] = tmpChilds[j + 1];
         }
-        ch2->cnt = (N + 1) - ch1->cnt - 1;
-        ch2->childs[0] = ch2Child;
-        for (int j = 0; j < ch2->cnt; j++)
+        newCh->cnt = (N + 1) - cur->cnt - 1;
+        newCh->childs[0] = ch2Child;
+        for (int j = 0; j < newCh->cnt; j++)
         {
-            ch2->keys[j] = tmpKey[(N + 1) / 2 + 1 + j];
-            ch2->childs[j + 1] = tmpChilds[(N + 1) / 2 + 1 + j + 1];
+            newCh->keys[j] = tmpKey[(N + 1) / 2 + 1 + j];
+            newCh->childs[j + 1] = tmpChilds[(N + 1) / 2 + 1 + j + 1];
         }
 
-        _updateHeight(ch1);
-        _updateHeight(ch2);
+        _updateHeight(cur);
+        _updateHeight(newCh);
 
-        return ch2;
+        return newCh;
     }
 
     // recursively find insertion position
@@ -256,8 +256,7 @@ private:
         int i =
             (int)(upper_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         i--;
-        node *ch = (node *)cur->childs[i + 1];
-        node *newCh = _insertHelper(ch, key, record);
+        node *newCh = _insertHelper((node *)cur->childs[i + 1], key, record);
         // insert to current node if leaf is split
         if (newCh)
         { // new child is created
