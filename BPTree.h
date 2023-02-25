@@ -92,7 +92,7 @@ private:
     _record *newRecord(const _record &r)
     {
         recordCnt++;
-        return new (disk.allocate()) _record(r);
+        return disk.allocate(r);
     }
 
     // only for single node

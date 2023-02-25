@@ -21,8 +21,12 @@ private:
     char *pool = new char[poolSize];
     // total number of blocks
     const static int totalCnt = int(poolSize / sizeof(Block));
+    // total slots in a block
+    const static int totalSlot = int(sizeof(Block) / sizeof(T));
     // check how much space is left of a block
     unordered_map<Block *, int> left;
+    // get empty slots in a block, false means empty, true means occupied
+    unordered_map<Block *, bool[totalSlot]> emptySlot;
     // from node to block
     unordered_map<T *, Block *> blkOf;
 
@@ -35,6 +39,8 @@ public:
         {
             tempBlk = (Block *)pool + i;
             left[tempBlk] = sizeof(Block);
+            for (int j = 0; j < totalSlot; j++)
+                emptySlot[tempBlk][j] = false;
         }
         curBlk = (Block *)pool;
     }
@@ -42,44 +48,60 @@ public:
     {
         delete[] pool;
     }
-    T *allocate()
+    T *allocate(const T &val)
     {
-        if ((sizeof(Block) - curOffset) < sizeof(T)) // need to find a new block
+        try
         {
-            curBlk = nullptr;
-            for (int i = 0; i < totalCnt; i++)
+            if (left[curBlk] < sizeof(T)) // need to find a new block
             {
-                curBlk = (Block *)pool + i;
-                if (left[curBlk] >= sizeof(T))
+                curBlk = nullptr;
+                // find a new block
+                for (int i = 0; i < totalCnt; i++)
                 {
-                    curOffset = sizeof(Block) - left[curBlk];
-                    break;
+                    curBlk = (Block *)pool + i;
+                    if (left[curBlk] >= sizeof(T))
+                    {
+                        // find a new slot
+                        for (int j = 0; j < totalSlot; j++)
+                        {
+                            if (emptySlot[curBlk][j] == 0)
+                            {
+                                emptySlot[curBlk][j] = 1;
+                                curOffset = j * sizeof(T);
+                                break;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
             if (curBlk == nullptr)
             {
-                cout << "No enough space in disk" << endl;
-                exit(1);
+                throw runtime_error("No enough space in the disk!");
             }
+        }
+        catch (runtime_error &e)
+        {
+            cout << e.what() << endl;
         }
         // assign the address
         T *ret = (T *)((char *)(curBlk) + curOffset);
-        curOffset += sizeof(T);
         left[curBlk] -= sizeof(T);
         blkOf[ret] = curBlk;
         return ret;
     }
 
-    void
-    deallocate(T *node)
+    void deallocate(T *node)
     {
         Block *blk = blkOf[node];
         left[blk] += sizeof(node);
-        delete node;
+        blkOf.erase(node);
+        emptySlot[blk][curOffset / sizeof(T)] = 0;
     }
 
-    int countAccessed(vector<Block> node)
+    int countAccessed(vector<T *> node)
     {
+        //  a set counter for blocks
         set<Block *> cntBlock;
         for (auto it = node.begin(); it != node.end(); it++)
         {
