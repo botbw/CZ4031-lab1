@@ -666,20 +666,18 @@ public:
 
 #ifdef DEBUG
 
-    void dfs(node *cur, map<node *, int> &m, int &idx)
-    {
+    void dfs(node *cur, map<node *, int> &m, int &idx) {
         if (m[cur] == 0)
             m[cur] = ++idx;
         cout << "[" << m[cur] << "]" << *cur;
         if (cur->height == 0)
             return;
-        dfs((node *)cur->childs[0], m, idx);
+        dfs((node *) cur->childs[0], m, idx);
         for (int i = 0; i < cur->cnt; i++)
-            dfs((node *)cur->childs[i + 1], m, idx);
+            dfs((node *) cur->childs[i + 1], m, idx);
     }
 
-    void dfs()
-    {
+    void dfs() {
         static map<node *, int> m;
         static int idx = 0;
         m.clear();

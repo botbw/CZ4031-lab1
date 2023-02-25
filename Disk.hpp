@@ -39,7 +39,8 @@ public:
 
     T *allocate(const T &val) {
         if (unallocated.empty()) { // no available space, try to lazily get blocks
-            if (blkId == numBlock) throw runtime_error("No enough space in the disk!"); // no block and no
+            if (blkId == numBlock)
+                throw runtime_error("No enough space in the disk!"); // no unallocated mem and no more block to use
             // if there are blocks left
             Block *blkStart = (Block *) pool;
             Block *curBlk = blkStart + blkId;
@@ -74,8 +75,8 @@ public:
         }
         return cntBlock.size();
     }
-    int countUsed()
-    {
+
+    int countUsed() {
         return allocated.size();
     }
 };
