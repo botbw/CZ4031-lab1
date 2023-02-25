@@ -46,6 +46,7 @@ public:
     }
 
     T *allocate(const T &val) {
+        if(avail.empty()) throw bad_alloc();
         T *ret = avail.front();
         avail.pop();
         assert(allocated.count(ret) == 0);

@@ -4,7 +4,7 @@
 const int BLOCK_SIZE = 200;
 // use MB instead of MiB
 #ifdef DEBUG
-const int DISK_MEM_SIZE = 10 * 1000 * 1000;
+const int DISK_MEM_SIZE = 1 * 1000 * 1000;
 #else
 const int DISK_MEM_SIZE = 500 * 1000 * 1000;
 #endif
