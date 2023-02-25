@@ -46,7 +46,7 @@ public:
     }
 
     T *allocate(const T &val) {
-        if(avail.empty()) throw bad_alloc();
+        if(avail.empty()) throw runtime_error("No enough space in the disk!");
         T *ret = avail.front();
         avail.pop();
         new (ret) T(val);
