@@ -9,8 +9,6 @@
 const int MEM_TOTAL = 500 * 1024 * 1024;
 
 using namespace std;
-
-// <node, 100MB in bytes>
 template <typename T, int poolSize = MEM_TOTAL>
 class Disk
 {
@@ -24,7 +22,7 @@ private:
     // total number of blocks
     const static int totalCnt = int(poolSize / sizeof(Block));
     // true when the block is completely free, false when the block is partially/fully used
-    bool empty[totalCnt];
+    bool *empty = new bool[totalCnt];
     // check how much space is left of a block
     unordered_map<Block *, int> left;
     // from node to block
@@ -33,13 +31,15 @@ private:
 public:
     Disk()
     {
+        curOffset = 0;
+        Block *tempBlk;
         for (int i = 0; i < totalCnt; i++)
         {
-            curBlk = (Block *)pool + i;
+            tempBlk = (Block *)pool + i;
             empty[i] = true;
-            left[curBlk] = sizeof(Block);
+            left[tempBlk] = sizeof(Block);
         }
-        blkOf.clear();
+        curBlk = (Block *)pool;
     }
     ~Disk()
     {
@@ -47,7 +47,7 @@ public:
     }
     T *allocate()
     {
-        if (curOffset < sizeof(T)) // need to find a new block
+        if ((sizeof(Block) - curOffset) < sizeof(T)) // need to find a new block
         {
             curBlk = nullptr;
             for (int i = 0; i < totalCnt; i++)
@@ -65,15 +65,17 @@ public:
                 exit(1);
             }
             // assign the address
-            T *ret = (T *)(curBlk + curOffset);
-            left[curBlk] -= sizeof(T);
-            blkOf[ret] = curBlk;
-            return ret;
         }
+        T *ret = (T *)((char *)curBlk + curOffset);
+        left[curBlk] -= sizeof(T);
+        blkOf[ret] = curBlk;
+        return ret;
     }
 
-    void deallocate(T *node)
+    void
+    deallocate(T *node)
     {
+        delete node;
         Block *blk = blkOf[node];
         left[blk] += sizeof(node);
     }
