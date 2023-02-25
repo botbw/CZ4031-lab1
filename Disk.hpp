@@ -49,9 +49,9 @@ public:
         if(avail.empty()) throw bad_alloc();
         T *ret = avail.front();
         avail.pop();
+        new (ret) T(val);
         assert(allocated.count(ret) == 0);
         allocated.insert(ret);
-        new (ret) T(val);
         return ret;
     }
 
