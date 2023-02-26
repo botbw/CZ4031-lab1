@@ -2,6 +2,7 @@
 #define BPTREE_DISK_HPP
 
 #include "Block.h"
+#include <cassert>
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
