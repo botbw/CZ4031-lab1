@@ -680,6 +680,7 @@ public:
             dfs((node *) cur->childs[i + 1], m, idx);
     }
 
+    // assign dfs index for each node
     void dfs() {
         static map<node *, int> m;
         static int idx = 0;

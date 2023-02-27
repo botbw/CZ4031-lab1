@@ -18,16 +18,12 @@ struct _key {
         return key < b.key;
     }
 
-    string to_string(const _key &b) const {
-        int key_int = b.key;
-        stringstream temp;
-        temp << key_int;
-        return temp.str();
+    friend string to_string(const _key &b) {
+        return to_string(b.key);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const _key &b) {
-        int key_int = b.key;
-        os << key_int;
+        os << b.key;
         return os;
     }
 };
@@ -153,6 +149,10 @@ void runExperiment() {
 }
 
 int main() {
+    cout << sizeof(void*) << endl;
+    cout << sizeof(_record) << endl;
+    cout << sizeof(_key) << endl;
+    cout << sizeof(node) << endl;
     srand(time(NULL));
     clock_t start, end;
     double cpu_time_used;
