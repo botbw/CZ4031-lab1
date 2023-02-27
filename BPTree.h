@@ -63,12 +63,12 @@ private:
     int nodeCnt;   // node number of current tree
     int recordCnt; // record number of current tree
     node *root;    // root of the tree
-    Disk<_record> disk;
+    Disk<_record> disk; // disk for _record storage
 
     // only for single node
     node *newNode() {
         nodeCnt++;
-        // get from memory
+        // get from memory (new)
         node *p = new node();
         return p;
     }
@@ -76,23 +76,26 @@ private:
     // only for single node
     void deleteNode(node *p) {
         nodeCnt--;
-        // free memory
+        // free memory (delete)
         delete p;
     }
 
     // only for single node
     _record *newRecord(const _record &r) {
         recordCnt++;
+        // get from disk (disk.allocate)
         return disk.allocate(r);
     }
 
     // only for single node
     void deleteRecord(_record *p) {
         recordCnt--;
+        // free to disk (disk.deallocate)
         disk.deallocate(p);
     }
 
     // for non leaf node
+    // cur->height = max{childs->height} + 1
     void _updateHeight(node *cur) {
         node *ch = (node *) cur->childs[0];
         int mx = ch->height;
@@ -103,7 +106,10 @@ private:
         cur->height = mx + 1;
     }
 
-    // for non leaf node
+    // for non leaf
+    // there should be a more elegant design, e.g. recursively return left-most leaf in a subtree
+    // however, brute-force here won't increase overall complexity
+    // for one deletion, the worst case O(logh*logh), average sigma(logh)
     void _updateKey(node *cur, int i) {
         node *p = (node *) cur->childs[i + 1];
         while (p->height != 0)
@@ -448,8 +454,8 @@ private:
 
         if (status == -1) { // child no modification
             return -1;
-        } else if (status == 0) { // child might modify keys
-            if (i >= 0)
+        } else if (status == 0) { // deletion happens
+            if (i >= 0) // update to correct key
                 _updateKey(cur, i);
             return 0;
         } else if (status ==
@@ -483,14 +489,18 @@ private:
         }
     }
 
+    // dfs deletion
     void _destruct(node *cur) {
+        // if leaf, just delete
         if (cur->height == 0) {
             deleteNode(cur);
             return;
         }
+        // delete all childs first
         _destruct((node *) cur->childs[0]);
         for (int i = 0; i < cur->cnt; i++)
             _destruct((node *) cur->childs[i + 1]);
+        // delete current
         deleteNode(cur);
     }
 
