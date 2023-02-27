@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <time.h>
 #include "BPTree.h"
 
 using namespace std;
@@ -140,6 +141,7 @@ void randomTest() {
     cout << "tree structure" << endl;
     tr.levelTraverse();
     cout << "pass" << endl;
+    return;
 }
 
 void runExperiment() {
@@ -151,9 +153,15 @@ void runExperiment() {
 }
 
 int main() {
-    //srand(time(NULL));
+    srand(time(NULL));
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
     randomTest();
-    runExperiment();
+    // runExperiment();
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;
     return 0;
 
 }
