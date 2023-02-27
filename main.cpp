@@ -9,15 +9,16 @@
 
 using namespace std;
 
-#pragma pack(1)
-
+#pragma pack(1) // might not work on x86
 struct _key {
     unsigned int key: 24;
 
+    // functional comparator, for BPTree
     bool operator<(const _key &b) const {
         return key < b.key;
     }
 
+    // for assertion and other purposes
     bool operator<=(const _key &b) const {
         return key <= b.key;
     }
@@ -43,10 +44,9 @@ struct _key {
         return os;
     }
 };
-
 #pragma pack(0)
 
-#pragma pack(1)
+#pragma pack(1) // might not work on x86
 struct _record {
     unsigned int tConst: 24;
     unsigned int rating: 8;
@@ -64,6 +64,9 @@ tree *constructTreeFromTsv(string filename) {
     tree *trp = new tree();
 
     ifstream fin(filename);
+    if (!fin) {
+        throw runtime_error("data.tsv not found");
+    }
     string line;
     getline(fin, line);
 
@@ -96,7 +99,7 @@ tree *constructTreeFromTsv(string filename) {
 
     cout << cnt << endl;
     cout << "max of numVotes = " << max_numVotes << ", max of tconst = " << max_tconst << "\n";
-    cout << trp->disk.getAllocatedBlock() << "blks\t" << trp->disk.getAllocatedMem()/1024/1024 << "mb\n";
+    cout << trp->disk.getAllocatedBlock() << "blks\t" << trp->disk.getAllocatedMem() / 1024 / 1024 << "mb\n";
 
     return trp;
 }
@@ -163,52 +166,52 @@ void randomTest() {
 }
 */
 
-void experiment1(tree* tr){
+void experiment1(tree *tr) {
     cout << "Start Emperiment 1: " << "\n";
 
-    cout << "1.1 number of records: " <<  tr -> size() << "\n";
+    cout << "1.1 number of records: " << tr->size() << "\n";
     cout << "1.2 size of a record: " << sizeof(_record) << " bytes\n";
 
-    cout << "1.3 number of records stored in a block: " << tr -> getDisk() -> getNumRecordsPerBlock() << "\n";
-    cout << "1.4 number of blocks to storing data: " << tr -> getDisk() -> getAllocatedBlock() << "\n";
+    cout << "1.3 number of records stored in a block: " << tr->getDisk()->getNumRecordsPerBlock() << "\n";
+    cout << "1.4 number of blocks to storing data: " << tr->getDisk()->getAllocatedBlock() << "\n";
 
     cout << "Completed Experiment 1. " << "\n\n";
 }
 
-void experiment2(tree* tr){
+void experiment2(tree *tr) {
     cout << "Start Emperiment 2: " << "\n";
 
-    cout << "2.1 parameter N: " <<  N << "\n";
-    cout << "2.2 number of nodes: " << tr -> nodeSize() << "\n";
+    cout << "2.1 parameter N: " << N << "\n";
+    cout << "2.2 number of nodes: " << tr->nodeSize() << "\n";
 
-    cout << "2.3 number of levels: " << tr -> height() << "\n";
+    cout << "2.3 number of levels: " << tr->height() << "\n";
     cout << "2.4 keys of the root node: ";
-    tr -> printRootInfo();
+    tr->printRootInfo();
     cout << "\n";
 
     cout << "Completed Experiment 2. " << "\n\n";
 }
 
-void experiment3(tree* tr){
+void experiment3(tree *tr) {
     cout << "Start Emperiment 3: " << "\n";
 
     clock_t start, end;
     start = clock();
 
-    vector<_record *> records = tr -> query(_key{500}, _key{500});
+    vector<_record *> records = tr->query(_key{500}, _key{500});
 
     end = clock();
 
     cout << "number of records that numVotes = 500: " << records.size() << "\n";
-    
+
     //cout << "3.1. number of accessed tree nodes: " << tr -> accessedNodes() << "\n";
-    cout << "3.2. number of accessed data blocks: " << tr -> getDisk() -> getAccessedBlock(records) << "\n";
+    cout << "3.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
 
     int sum = 0;
-    for(int i=0;i<records.size();i++){
+    for (int i = 0; i < records.size(); i++) {
         sum += records[i]->rating;
     }
-    double avg = double(sum)/10.0/records.size();
+    double avg = double(sum) / 10.0 / records.size();
 
     cout << "3.3. average value of averageRating: " << avg << "\n";
 
@@ -220,28 +223,28 @@ void experiment3(tree* tr){
     cout << "Completed Experiment 3. " << "\n\n";
 }
 
-void experiment4(tree* tr){
-    cout << "Start Emperiment 4: " << "\n";
+void experiment4(tree *tr) {
+    cout << "Start Experiment 4: " << "\n";
 
     clock_t start, end;
     double cpu_time_used;
     start = clock();
 
-    vector<_record *> records = tr -> query(_key{30000}, _key{40000});
+    vector<_record *> records = tr->query(_key{30000}, _key{40000});
 
     end = clock();
     cpu_time_used = (double) (end - start); //in clocks
 
     cout << "number of records that numVotes in [30000, 40000]: " << records.size() << "\n";
-    
+
     //cout << "4.1. number of accessed tree nodes: " << tr -> accessedNodes() << "\n";
-    cout << "4.2. number of accessed data blocks: " << tr -> getDisk() -> getAccessedBlock(records) << "\n";
+    cout << "4.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
 
     int sum = 0;
-    for(int i=0;i<records.size();i++){
+    for (int i = 0; i < records.size(); i++) {
         sum += records[i]->rating;
     }
-    double avg = double(sum)/10.0/records.size();
+    double avg = double(sum) / 10.0 / records.size();
 
     cout << "4.3. average value of averageRating: " << avg << "\n";
 
@@ -253,11 +256,20 @@ void experiment4(tree* tr){
     cout << "Completed Experiment 4. " << "\n\n";
 }
 
+void printLinebreak() {
+    cout << "---------------------------------------------------------------------";
+    cout << endl << endl;
+}
+
 void runExperiment() {
-    tree *tr = constructTreeFromTsv("data.tsv");
+    tree *tr = constructTreeFromTsv("../data.tsv");
+    printLinebreak();
     experiment1(tr);
+    printLinebreak();
     experiment2(tr);
+    printLinebreak();
     experiment3(tr);
+    printLinebreak();
     experiment4(tr);
     // ...
     // ...
