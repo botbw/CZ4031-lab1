@@ -10,23 +10,28 @@
 using namespace std;
 
 #pragma pack(1)
+
 struct _key {
     unsigned int key: 24;
+
     bool operator<(const _key &b) const {
         return key < b.key;
     }
+
     string to_string(const _key &b) const {
-        int key_int  = b.key;
+        int key_int = b.key;
         stringstream temp;
-        temp<<key_int;
+        temp << key_int;
         return temp.str();
     }
-    friend std::ostream& operator << ( std::ostream& os, const _key& b ) {
-        int key_int  = b.key;
+
+    friend std::ostream &operator<<(std::ostream &os, const _key &b) {
+        int key_int = b.key;
         os << key_int;
         return os;
     }
 };
+
 #pragma pack(0)
 
 #pragma pack(1)
@@ -42,9 +47,9 @@ const int N = 3;
 using tree = BPTree<_key, _record, N>;
 using node = tree::node;
 
-tree* constructTreeFromTsv(string filename){
+tree *constructTreeFromTsv(string filename) {
     cout << "enter here 0" << "\n";
-    tree* trp = new tree();
+    tree *trp = new tree();
 
     ifstream fin(filename);
     string line;
@@ -58,12 +63,12 @@ tree* constructTreeFromTsv(string filename){
         string tconst_str;
         string rating_str;
         unsigned int numVotes_full = 0;
-        getline( is, tconst_str, '\t' );
-        getline( is, rating_str, '\t' );
+        getline(is, tconst_str, '\t');
+        getline(is, rating_str, '\t');
         is >> numVotes_full;
 
-        unsigned int tconst_full = stoi(tconst_str.substr(2, tconst_str.size()-2));
-        unsigned int rating_full = (rating_str[0] - '0')*10 + (rating_str[2] - '0');
+        unsigned int tconst_full = stoi(tconst_str.substr(2, tconst_str.size() - 2));
+        unsigned int rating_full = (rating_str[0] - '0') * 10 + (rating_str[2] - '0');
 
         _key skey = {numVotes_full};
         _record srecord = {tconst_full, rating_full, numVotes_full};
@@ -100,7 +105,7 @@ void randomTest() {
             insertedVal.push_back(num);
             sett.insert(num);
             assert(tr.selfCheck());
-        } else if(op == 1) { // delete
+        } else if (op == 1) { // delete
             if (insertedVal.size() == 0) {
                 i--;
                 continue;
@@ -123,7 +128,7 @@ void randomTest() {
             int hi = max(insertedVal[id1], insertedVal[id2]);
             auto tmp = tr.query(lo, hi); // [lo, hi]
             vector<int> q1;
-            for(auto p : tmp) {
+            for (auto p: tmp) {
                 q1.push_back(*p);
             }
             auto it1 = sett.lower_bound(lo), it2 = sett.upper_bound(hi);
@@ -158,5 +163,5 @@ int main() {
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;
     return 0;
-    
+
 }
