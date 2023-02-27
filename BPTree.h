@@ -474,9 +474,11 @@ private:
         } else { // non leaf
             if (i == cur->cnt)
                 i--;
+            // in case there are multiple same keys, find the left-most one
             pair<node *, int> leftSib = _lower_bound((node *) cur->childs[i], key);
-            if (leftSib.first)
+            if (leftSib.first) // found
                 return leftSib;
+            // search key i
             return _lower_bound((node *) cur->childs[i + 1], key);
         }
     }
