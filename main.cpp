@@ -54,7 +54,9 @@ tree *constructTreeFromTsv(string filename) {
     unsigned int max_numVotes = 0;
     unsigned int max_tconst = 0;
     cout << "enter here 1" << "\n";
+    int cnt = 0;
     while (getline(fin, line)) {
+        cnt++;
         istringstream is(line);
         string tconst_str;
         string rating_str;
@@ -75,8 +77,10 @@ tree *constructTreeFromTsv(string filename) {
 
     }
     fin.close();
-
+    cout << cnt << endl;
     cout << "max_numVotes = " << max_numVotes << ", max_tconst = " << max_tconst << "\n";
+    cout << trp->disk.getAllocatedBlock() << "blks\t" << trp->disk.getAllocatedMem()/1024/1024 << "mb\n";
+
 
     return trp;
 }
@@ -131,6 +135,7 @@ void randomTest() {
             vector<int> q2(it1, it2);
             assert(q1 == q2);
         }
+        assert(tr.size() == sett.size());
     }
     cout << "tree survives after " << n << " operations" << endl;
     cout << "tree height: " << tr.height() << endl;
@@ -149,16 +154,14 @@ void runExperiment() {
 }
 
 int main() {
-    cout << sizeof(void*) << endl;
     cout << sizeof(_record) << endl;
     cout << sizeof(_key) << endl;
-    cout << sizeof(node) << endl;
     srand(time(NULL));
     clock_t start, end;
     double cpu_time_used;
     start = clock();
     randomTest();
-    // runExperiment();
+//     runExperiment();
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;

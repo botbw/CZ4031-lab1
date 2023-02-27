@@ -63,7 +63,9 @@ private:
     int nodeCnt;   // node number of current tree
     int recordCnt; // record number of current tree
     node *root;    // root of the tree
+public:
     Disk<_record> disk; // disk for _record storage
+private:
 
     // only for single node
     node *newNode() {
@@ -527,7 +529,6 @@ public:
 
     // if key already exists, insert to upper bound
     void insert(const _key &key, const _record record, vector<node *> *accessed = nullptr) {
-        recordCnt++;
         node *p = _insertHelper(root, key, record, accessed);
         if (p) { // root is split
             node *newRt = newNode();
@@ -550,8 +551,6 @@ public:
             root = (node *) root->childs[0];
             deleteNode(p);
         }
-        if (status != -1)
-            recordCnt--;
         return status != -1;
     }
 
