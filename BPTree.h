@@ -257,7 +257,8 @@ private:
             return nullptr;
         }
     }
-
+    //        pKeyCur pKeyRSib
+    //         |      |
     // lSib -> cur -> rSib
     // return status
     // -1: key not found and no modification
