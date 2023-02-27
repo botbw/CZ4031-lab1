@@ -63,12 +63,14 @@ private:
     int nodeCnt;   // node number of current tree
     int recordCnt; // record number of current tree
     node *root;    // root of the tree
-    Disk<_record> disk;
+public:
+    Disk<_record> disk; // disk for _record storage
+private:
 
     // only for single node
     node *newNode() {
         nodeCnt++;
-        // get from memory
+        // get from memory (new)
         node *p = new node();
         return p;
     }
@@ -76,23 +78,26 @@ private:
     // only for single node
     void deleteNode(node *p) {
         nodeCnt--;
-        // free memory
+        // free memory (delete)
         delete p;
     }
 
     // only for single node
     _record *newRecord(const _record &r) {
         recordCnt++;
+        // get from disk (disk.allocate)
         return disk.allocate(r);
     }
 
     // only for single node
     void deleteRecord(_record *p) {
         recordCnt--;
+        // free to disk (disk.deallocate)
         disk.deallocate(p);
     }
 
     // for non leaf node
+    // cur->height = max{childs->height} + 1
     void _updateHeight(node *cur) {
         node *ch = (node *) cur->childs[0];
         int mx = ch->height;
@@ -103,7 +108,10 @@ private:
         cur->height = mx + 1;
     }
 
-    // for non leaf node
+    // for non leaf
+    // there should be a more elegant design, e.g. recursively return left-most leaf in a subtree
+    // however, brute-force here won't increase overall complexity
+    // for one deletion, the worst case O(logh*logh), average sigma(logh)
     void _updateKey(node *cur, int i) {
         node *p = (node *) cur->childs[i + 1];
         while (p->height != 0)
@@ -222,8 +230,8 @@ private:
 
     // recursively find insertion position
     // handle new ptr from children if necessary
-    node *_insertHelper(node *cur, const _key &key, const _record &record, vector<node*> *accessed = nullptr) {
-        if(accessed) { // for experiment
+    node *_insertHelper(node *cur, const _key &key, const _record &record, vector<node *> *accessed = nullptr) {
+        if (accessed) { // for experiment
             accessed->push_back(cur);
         }
         // non-root leaf
@@ -448,8 +456,8 @@ private:
 
         if (status == -1) { // child no modification
             return -1;
-        } else if (status == 0) { // child might modify keys
-            if (i >= 0)
+        } else if (status == 0) { // deletion happens
+            if (i >= 0) // update to correct key
                 _updateKey(cur, i);
             return 0;
         } else if (status ==
@@ -474,21 +482,27 @@ private:
         } else { // non leaf
             if (i == cur->cnt)
                 i--;
+            // in case there are multiple same keys, find the left-most one
             pair<node *, int> leftSib = _lower_bound((node *) cur->childs[i], key);
-            if (leftSib.first)
+            if (leftSib.first) // found
                 return leftSib;
+            // search key i
             return _lower_bound((node *) cur->childs[i + 1], key);
         }
     }
 
+    // dfs deletion
     void _destruct(node *cur) {
+        // if leaf, just delete
         if (cur->height == 0) {
             deleteNode(cur);
             return;
         }
+        // delete all childs first
         _destruct((node *) cur->childs[0]);
         for (int i = 0; i < cur->cnt; i++)
             _destruct((node *) cur->childs[i + 1]);
+        // delete current
         deleteNode(cur);
     }
 
@@ -514,8 +528,7 @@ public:
     }
 
     // if key already exists, insert to upper bound
-    void insert(const _key &key, const _record record, vector<node*> *accessed = nullptr) {
-        recordCnt++;
+    void insert(const _key &key, const _record record, vector<node *> *accessed = nullptr) {
         node *p = _insertHelper(root, key, record, accessed);
         if (p) { // root is split
             node *newRt = newNode();
@@ -538,8 +551,6 @@ public:
             root = (node *) root->childs[0];
             deleteNode(p);
         }
-        if (status != -1)
-            recordCnt--;
         return status != -1;
     }
 
@@ -616,31 +627,34 @@ public:
     }
 
     bool selfCheck(node *cur) {
-        if (cur->cnt > N)
+        if (cur->cnt > N) // obvious
             return false;
         if (cur->height == 0) { // leaf check
-            if (cur != root && cur->cnt < (N + 1) / 2)
-                return false; // cnt check
-            if (!is_sorted(cur->keys, cur->keys + cur->cnt))
-                return false; // order check
-            // siblings check will be done by checking order
+            if (cur != root && cur->cnt < (N + 1) / 2) // cnt should be at least (N+1) / 2;
+                return false;
+            if (!is_sorted(cur->keys, cur->keys + cur->cnt)) // keys mush be sorted
+                return false;
             return true;
         }
         // node check
-        if (cur != root && cur->cnt < N / 2)
+        if (cur != root && cur->cnt < N / 2) // cnt should be at least N/2
             return false;
-        if (!is_sorted(cur->keys, cur->keys + cur->cnt))
+        if (!is_sorted(cur->keys, cur->keys + cur->cnt)) // keys must be sorted
             return false;
+
+        //  check subtrees and keys
         if (!selfCheck((node *) cur->childs[0]))
             return false;
         for (int i = 0; i < cur->cnt; i++) {
+            // i-th key should be the left-most leaf of i-th subtree
             node *p = (node *) cur->childs[i + 1];
             while (p->height != 0)
                 p = (node *) p->childs[0];
             if (cur->keys[i] != p->keys[0])
                 return false;
-            p = (node *) cur->childs[i];
 
+            // i-th key should be >= the right-most leaf of (i-1)-th subtree
+            p = (node *) cur->childs[i];
             while (p->height != 0)
                 p = (node *) p->childs[p->cnt - 1];
             if (p->keys[p->cnt - 1] > cur->keys[i])
@@ -652,6 +666,7 @@ public:
         return true;
     }
 
+    // check the structure of BPTree (no simulation, only structure correctness)
     bool selfCheck() {
         auto tmp = lower_bound(-1);
         int i = tmp.second;
@@ -664,6 +679,7 @@ public:
             p = (node *) p->childs[N];
             i = 0;
         }
+        // leaf must be sorted (the completeness will be checked with multiset simulation in main.cpp)
         return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
 
@@ -680,6 +696,7 @@ public:
             dfs((node *) cur->childs[i + 1], m, idx);
     }
 
+    // assign dfs index for each node
     void dfs() {
         static map<node *, int> m;
         static int idx = 0;
