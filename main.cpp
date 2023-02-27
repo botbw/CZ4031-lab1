@@ -43,7 +43,7 @@ struct _record {
 #pragma pack(0)
 
 // definition of B+ tree
-const int N = 3;
+const int N = 15;
 using tree = BPTree<_key, _record, N>;
 using node = tree::node;
 
@@ -153,6 +153,7 @@ void runExperiment() {
 }
 
 int main() {
+    cout << "size of a tree node: " << sizeof(tree::node) << "\n";
     srand(time(NULL));
     clock_t start, end;
     double cpu_time_used;
