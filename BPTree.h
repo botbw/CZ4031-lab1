@@ -222,7 +222,10 @@ private:
 
     // recursively find insertion position
     // handle new ptr from children if necessary
-    node *_insertHelper(node *cur, const _key &key, const _record &record) {
+    node *_insertHelper(node *cur, const _key &key, const _record &record, vector<node*> *accessed = nullptr) {
+        if(accessed) { // for experiment
+            accessed->push_back(cur);
+        }
         // non-root leaf
         if (cur->height == 0)
             return _insertAtLeaf(cur, key, record);
@@ -511,9 +514,9 @@ public:
     }
 
     // if key already exists, insert to upper bound
-    void insert(const _key &key, const _record record) {
+    void insert(const _key &key, const _record record, vector<node*> *accessed = nullptr) {
         recordCnt++;
-        node *p = _insertHelper(root, key, record);
+        node *p = _insertHelper(root, key, record, accessed);
         if (p) { // root is split
             node *newRt = newNode();
             newRt->cnt = 1;

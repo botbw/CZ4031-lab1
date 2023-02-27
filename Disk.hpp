@@ -66,18 +66,24 @@ public:
         unallocated.push(p);
     }
 
-    int countAccessed(vector<T *> node) {
+    int getAccessedBlock(vector<T *> pTs) {
         //  a set counter for blocks
         unordered_set<Block *> cntBlock;
-        for (auto it = node.begin(); it != node.end(); it++) {
-            Block *blk = blkOf[*it];
-            cntBlock.insert(blk);
-        }
+        for (auto pT: pTs)
+            cntBlock.insert(blkOf[pT]);
         return cntBlock.size();
     }
 
-    int countUsed() {
+    int getAllocatedBlock() {
+        unordered_set<Block *> cntBlock;
+        for (auto pT: allocated)
+            cntBlock.insert(blkOf[pT]);
         return allocated.size();
+    }
+
+    // in bytes
+    int getAllocatedMem() {
+        return allocated.size() * sizeof(T);
     }
 };
 
