@@ -57,6 +57,12 @@ public:
             ret += "| ";
             return ret;
         }
+
+        friend void print_keys(const node &n) {
+            for (int i = 0; i < n.cnt; i++) {
+                cout << n.keys[i] << " ";
+            }
+        }
     };
 
 private:
@@ -548,6 +554,8 @@ public:
         pair<node *, int> q = lower_bound(root, key);
         node *p = q.first;
         int i = q.second;
+        //node *p is accessed in the lower_bound function
+
         if (i == p->cnt || p->keys[i] != key)
             return nullptr;
         return (_record *) p->childs[i];
@@ -559,6 +567,7 @@ public:
         pair<node *, int> q = lower_bound(lo);
         node *p = q.first;
         int i = q.second;
+        //node *p is accessed in the lower_bound function
 
         vector<_record *> ret;
 
@@ -587,6 +596,11 @@ public:
             p = (node *) p->childs[N];
         }
         return ret;
+    }
+
+    void printRootInfo() const {
+        print_keys(*root);
+        return;
     }
 
     void levelTraverse(node *cur) const {
@@ -665,6 +679,10 @@ public:
             i = 0;
         }
         return is_sorted(a.begin(), a.end()) && selfCheck(root);
+    }
+
+    Disk<_record>* getDisk() {
+        return &disk;
     }
 
 #ifdef DEBUG

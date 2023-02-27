@@ -86,6 +86,10 @@ public:
     int getAllocatedMem() {
         return allocated.size() * sizeof(T);
     }
+
+    int getNumRecordsPerBlock() {
+        return sizeof(Block) / sizeof(T);
+    }
 };
 
 #endif // BPTREE_DISK_HPP
