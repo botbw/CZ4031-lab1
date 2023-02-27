@@ -34,16 +34,12 @@ struct _key {
         return key == b.key;
     }
 
-    string to_string(const _key &b) const {
-        int key_int = b.key;
-        stringstream temp;
-        temp << key_int;
-        return temp.str();
+    friend string to_string(const _key &b) {
+        return to_string(b.key);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const _key &b) {
-        int key_int = b.key;
-        os << key_int;
+        os << b.key;
         return os;
     }
 };
@@ -73,8 +69,10 @@ tree *constructTreeFromTsv(string filename) {
 
     unsigned int max_numVotes = 0;
     unsigned int max_tconst = 0;
-    //cout << "enter here 1" << "\n";
+
+    int cnt = 0;
     while (getline(fin, line)) {
+        cnt++;
         istringstream is(line);
         string tconst_str;
         string rating_str;
@@ -96,8 +94,9 @@ tree *constructTreeFromTsv(string filename) {
     }
     fin.close();
 
+    cout << cnt << endl;
     cout << "max of numVotes = " << max_numVotes << ", max of tconst = " << max_tconst << "\n";
-    cout << "Completed processing the tsv." << "\n\n";
+    cout << trp->disk.getAllocatedBlock() << "blks\t" << trp->disk.getAllocatedMem()/1024/1024 << "mb\n";
 
     return trp;
 }
@@ -153,6 +152,7 @@ void randomTest() {
             vector<int> q2(it1, it2);
             assert(q1 == q2);
         }
+        assert(tr.size() == sett.size());
     }
     cout << "tree survives after " << n << " operations" << endl;
     cout << "tree height: " << tr.height() << endl;
@@ -273,7 +273,7 @@ int main() {
     double cpu_time_used;
     start = clock();
     randomTest();
-    // runExperiment();
+//     runExperiment();
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;

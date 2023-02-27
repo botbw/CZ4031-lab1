@@ -79,7 +79,7 @@ public:
         unordered_set<Block *> cntBlock;
         for (auto pT: allocated)
             cntBlock.insert(blkOf[pT]);
-        return allocated.size();
+        return cntBlock.size();
     }
 
     // in bytes
