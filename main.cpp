@@ -9,9 +9,10 @@
 
 using namespace std;
 
-const int MAXN = 15;
+const int MAXN = 16;
 
 #pragma pack(1) // might not work on x86
+
 struct _key {
     unsigned int key: 24;
 
@@ -46,6 +47,7 @@ struct _key {
         return os;
     }
 };
+
 #pragma pack(0)
 
 #pragma pack(1) // might not work on x86
@@ -61,12 +63,12 @@ void printLinebreak() {
     cout << endl;
 }
 
-template <int n>
+template<int n>
 void correctnessTest() {
     using tree = BPTree<int, int, n>;
 
     // selfCheck take a lot of time, OPERATIONS cannot be too large
-    const int OPERATIONS = 50000;
+    const int OPERATIONS = 10000;
     int range = rand();
 
     tree tr;
@@ -119,15 +121,15 @@ void correctnessTest() {
     }
     cout << "pass" << endl;
     printLinebreak();
-    correctnessTest<n-1>();
+    correctnessTest<n - 1>();
 }
 
-template <>
+template<>
 void correctnessTest<1>() {
     return;
 }
 
-template <int n>
+template<int n>
 void insertionEfficiencyTest(int &bestN, int &bestClk) {
     using tree = BPTree<int, int, n>;
 
@@ -149,18 +151,18 @@ void insertionEfficiencyTest(int &bestN, int &bestClk) {
 
     clock_t duration = clock() - st;
 
-    if(duration < bestClk) {
+    if (duration < bestClk) {
         bestClk = duration;
         bestN = n;
     }
 
-    cout << "runtime for " << n << " : " << (double)duration / CLOCKS_PER_SEC << " s" << endl;
+    cout << "runtime for " << n << " : " << (double) duration / CLOCKS_PER_SEC << " s" << endl;
     printLinebreak();
 
     insertionEfficiencyTest<n - 1>(bestN, bestClk);
 }
 
-template <>
+template<>
 void insertionEfficiencyTest<1>(int &bestN, int &bestClk) {
     return;
 }
@@ -171,7 +173,7 @@ void findBestN() {
     cout << "best n is " << bestN << " with runtime " << (double) bestClk / CLOCKS_PER_SEC << " s" << endl;
 }
 
-const int N = 15;
+const int N = 16;
 using tree = BPTree<_key, _record, N>;
 
 tree *constructTreeFromTsv(string filename) {
@@ -313,7 +315,6 @@ void experiment4(tree *tr) {
 }
 
 
-
 void runExperiment() {
     tree *tr = constructTreeFromTsv("../data.tsv");
     printLinebreak();
@@ -329,20 +330,18 @@ void runExperiment() {
 }
 
 int main() {
+    srand(43); // for consistent output
+    correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
+    findBestN(); // simulate 1,000,000 insertions, and get best n (it might output different optimal n each time, but we will choose one in our following experiment)
+    cout << sizeof(BPTree<_key, _record, MAXN>::node) << endl;
+    cout << "experiment starts: " << endl;
     cout << "size of struct key: " << sizeof(_key) << "\n";
     cout << "size of struct record: " << sizeof(_record) << "\n";
     cout << "Set parameter N = " << N << ", so the size of tree node is " << sizeof(tree::node) << " bytes\n";
-    printLinebreak();
-    srand(time(NULL));
-//    correctnessTest<15>();
-    findBestN();
-//    clock_t start, end;
-//    double cpu_time_used;
-//    start = clock();
-//    runExperiment();
-//    end = clock();
-//    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-//    std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;
+    clock_t start = clock();
+    runExperiment();
+    clock_t duration = clock() - start;
+    cout << "Execution time: " << double (duration) / CLOCKS_PER_SEC << " seconds" << endl;
     return 0;
 
 }
