@@ -9,6 +9,8 @@
 
 using namespace std;
 
+const int MAXN = 15;
+
 #pragma pack(1) // might not work on x86
 struct _key {
     unsigned int key: 24;
@@ -54,12 +56,128 @@ struct _record {
 };
 #pragma pack(0)
 
-// definition of B+ tree
+void printLinebreak() {
+    cout << "---------------------------------------------------------------------";
+    cout << endl;
+}
+
+template <int n>
+void correctnessTest() {
+    using tree = BPTree<int, int, n>;
+
+    // selfCheck take a lot of time, OPERATIONS cannot be too large
+    const int OPERATIONS = 50000;
+    int range = rand();
+
+    tree tr;
+    vector<int> insertedVal; // to store insertion history
+    multiset<int> sett; // to simulate the BPTree
+
+    cout << OPERATIONS << " random operations (insert, delete, query) on BPTree<int, int, " << n << ">" << endl;
+
+    for (int i = 1; i <= OPERATIONS; i++) {
+        int op = rand() % 3;
+        if (op == 0) { // insert
+            int num = rand() % range;
+            tr.insert(num, num);
+            insertedVal.push_back(num);
+            sett.insert(num);
+            assert(tr.selfCheck());
+        } else if (op == 1) { // delete
+            if (insertedVal.size() == 0) {
+                i--;
+                continue;
+            }
+            int id = rand() % ((int) insertedVal.size());
+            bool deleted = tr.remove(insertedVal[id]);
+            bool _deleted = sett.count(insertedVal[id]);
+            if (_deleted) sett.erase(sett.find(insertedVal[id]));
+            assert(deleted == _deleted);
+            assert(tr.selfCheck());
+        } else { // query
+            if (insertedVal.size() == 0) {
+                i--;
+                continue;
+            }
+            // two random value from insert history
+            int id1 = rand() % ((int) insertedVal.size());
+            int id2 = rand() % ((int) insertedVal.size());
+            int shiftRange = range / 10;
+            int offset = (rand() % shiftRange) - (shiftRange / 2);
+            int lo = min(insertedVal[id1] + offset, insertedVal[id2] + offset);
+            int hi = max(insertedVal[id1] + offset, insertedVal[id2] + offset);
+            auto tmp = tr.query(lo, hi); // [lo, hi]
+            vector<int> q1;
+            for (auto p: tmp) {
+                q1.push_back(*p);
+            }
+            auto it1 = sett.lower_bound(lo), it2 = sett.upper_bound(hi);
+            vector<int> q2(it1, it2);
+            assert(q1 == q2);
+        }
+        assert(tr.size() == sett.size());
+    }
+    cout << "pass" << endl;
+    printLinebreak();
+    correctnessTest<n-1>();
+}
+
+template <>
+void correctnessTest<1>() {
+    return;
+}
+
+template <int n>
+void insertionEfficiencyTest(int &bestN, int &bestClk) {
+    using tree = BPTree<int, int, n>;
+
+    // around the number of data.tsv
+    const int OPERATIONS = 1000000;
+    int range = rand();
+
+    tree tr;
+
+    cout << OPERATIONS << " random insertions on BPTree<int, int, " << n << ">" << endl;
+
+    clock_t st = clock();
+
+    for (int i = 1; i <= OPERATIONS; i++) {
+        int num = rand() % range;
+        clock_t st = clock();
+        tr.insert(num, num);
+    }
+
+    clock_t duration = clock() - st;
+
+    if(duration < bestClk) {
+        bestClk = duration;
+        bestN = n;
+    }
+
+    cout << "runtime for " << n << " : " << (double)duration / CLOCKS_PER_SEC << " s" << endl;
+    printLinebreak();
+
+    insertionEfficiencyTest<n - 1>(bestN, bestClk);
+}
+
+template <>
+void insertionEfficiencyTest<1>(int &bestN, int &bestClk) {
+    return;
+}
+
+void findBestN() {
+    int bestN = 0, bestClk = INT32_MAX;
+    insertionEfficiencyTest<MAXN>(bestN, bestClk);
+    cout << "best n is " << bestN << " with runtime " << (double) bestClk / CLOCKS_PER_SEC << " s" << endl;
+}
+
 const int N = 15;
 using tree = BPTree<_key, _record, N>;
-using node = tree::node;
 
 tree *constructTreeFromTsv(string filename) {
+    // definition of B+ tree
+    using tree = BPTree<_key, _record, N>;
+    using node = tree::node;
     cout << "Start processing the tsv..." << "\n";
     tree *trp = new tree();
 
@@ -99,72 +217,10 @@ tree *constructTreeFromTsv(string filename) {
 
     cout << cnt << endl;
     cout << "max of numVotes = " << max_numVotes << ", max of tconst = " << max_tconst << "\n";
-    cout << trp->disk.getAllocatedBlock() << "blks\t" << trp->disk.getAllocatedMem() / 1024 / 1024 << "mb\n";
 
     return trp;
 }
 
-/*
-void randomTest() {
-    using tree = BPTree<int, int, 3>;
-
-    int n = 50000;
-    int range = rand();
-
-    tree tr;
-    vector<int> insertedVal; // to store insertion history
-    multiset<int> sett; // to simulate the BPTree
-
-    cout << n << " random operations (insert, delete, query)" << endl;
-
-    for (int i = 1; i <= n; i++) {
-        int op = rand() % 3;
-        if (op == 0) { // insert
-            int num = rand() % range;
-            tr.insert(num, num);
-            insertedVal.push_back(num);
-            sett.insert(num);
-            assert(tr.selfCheck());
-        } else if (op == 1) { // delete
-            if (insertedVal.size() == 0) {
-                i--;
-                continue;
-            }
-            int id = rand() % ((int) insertedVal.size());
-            bool deleted = tr.remove(insertedVal[id]);
-            bool _deleted = sett.count(insertedVal[id]);
-            if (_deleted) sett.erase(sett.find(insertedVal[id]));
-            assert(deleted == _deleted);
-            assert(tr.selfCheck());
-        } else { // query
-            if (insertedVal.size() == 0) {
-                i--;
-                continue;
-            }
-            // two random value from insert history
-            int id1 = rand() % ((int) insertedVal.size());
-            int id2 = rand() % ((int) insertedVal.size());
-            int lo = min(insertedVal[id1], insertedVal[id2]);
-            int hi = max(insertedVal[id1], insertedVal[id2]);
-            auto tmp = tr.query(lo, hi); // [lo, hi]
-            vector<int> q1;
-            for (auto p: tmp) {
-                q1.push_back(*p);
-            }
-            auto it1 = sett.lower_bound(lo), it2 = sett.upper_bound(hi);
-            vector<int> q2(it1, it2);
-            assert(q1 == q2);
-        }
-        assert(tr.size() == sett.size());
-    }
-    cout << "tree survives after " << n << " operations" << endl;
-    cout << "tree height: " << tr.height() << endl;
-    cout << "tree structure" << endl;
-    tr.levelTraverse();
-    cout << "pass" << endl;
-    return;
-}
-*/
 
 void experiment1(tree *tr) {
     cout << "Start Emperiment 1: " << "\n";
@@ -256,10 +312,7 @@ void experiment4(tree *tr) {
     cout << "Completed Experiment 4. " << "\n\n";
 }
 
-void printLinebreak() {
-    cout << "---------------------------------------------------------------------";
-    cout << endl << endl;
-}
+
 
 void runExperiment() {
     tree *tr = constructTreeFromTsv("../data.tsv");
@@ -279,18 +332,17 @@ int main() {
     cout << "size of struct key: " << sizeof(_key) << "\n";
     cout << "size of struct record: " << sizeof(_record) << "\n";
     cout << "Set parameter N = " << N << ", so the size of tree node is " << sizeof(tree::node) << " bytes\n";
-    /*
+    printLinebreak();
     srand(time(NULL));
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
-    randomTest();
-//     runExperiment();
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;
-    */
-    runExperiment();
+//    correctnessTest<15>();
+    findBestN();
+//    clock_t start, end;
+//    double cpu_time_used;
+//    start = clock();
+//    runExperiment();
+//    end = clock();
+//    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+//    std::cout << "Execution time: " << cpu_time_used << " seconds" << std::endl;
     return 0;
 
 }
