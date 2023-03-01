@@ -13,6 +13,28 @@
 
 using namespace std;
 
+class AccessedNodesCounter {
+private:
+    int count;
+
+public:
+    AccessedNodesCounter() {
+        count = 0;
+    }
+
+    void clearCounter(){
+        count = 0;
+    }
+
+    void addCount() {
+        count += 1;
+    }
+
+    int getCount() {
+        return count;
+    }
+};
+
 template<typename _key, typename _record, int N>
 class BPTree {
 public:
@@ -71,6 +93,8 @@ private:
     node *root;    // root of the tree
 public:
     Disk<_record> disk; // disk for _record storage
+    AccessedNodesCounter accessedNodesCounter;
+
 private:
 
     // only for single node
@@ -476,7 +500,10 @@ private:
     }
 
     // search lower_bound according to key (the first record_key >= key)
-    pair<node *, int> _lower_bound(node *cur, const _key &key) const {
+    pair<node *, int> _lower_bound(node *cur, const _key &key) {
+
+        accessedNodesCounter.addCount();
+
         int i =
                 (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         if (cur->height == 0) { // leaf node
@@ -511,7 +538,7 @@ private:
     }
 
 public:
-    BPTree() : nodeCnt{0}, recordCnt{0}, root{newNode()}, disk(DISK_MEM_SIZE) {}
+    BPTree() : nodeCnt{0}, recordCnt{0}, root{newNode()}, disk(DISK_MEM_SIZE), accessedNodesCounter{AccessedNodesCounter()} {}
 
     ~BPTree() {
         _destruct(root);
@@ -527,7 +554,7 @@ public:
         return *root;
     }
 
-    pair<node *, int> lower_bound(const _key &key) const {
+    pair<node *, int> lower_bound(const _key &key) {
         return _lower_bound(root, key);
     }
 
@@ -558,8 +585,19 @@ public:
         return status != -1;
     }
 
+    void removeAll(const _key &key) {
+        bool success = true;
+
+        while(success) {
+            success = remove(key);
+        }
+    }
+
     // query single key, return nullptr if not exist
-    _record *query(const _key *key) const {
+    _record *query(const _key *key) {
+
+        accessedNodesCounter.clearCounter();
+
         pair<node *, int> q = lower_bound(root, key);
         node *p = q.first;
         int i = q.second;
@@ -571,7 +609,10 @@ public:
     }
 
     // query [lo, hi]
-    vector<_record *> query(const _key &lo, const _key &hi) const {
+    vector<_record *> query(const _key &lo, const _key &hi) {
+
+        accessedNodesCounter.clearCounter();
+
         assert(lo <= hi);
         pair<node *, int> q = lower_bound(lo);
         node *p = q.first;
@@ -587,6 +628,7 @@ public:
                 ret.push_back((_record *) p->childs[i]);
             }
             p = (node *) p->childs[N];
+            accessedNodesCounter.addCount();
             i = 0;
         }
         return ret;
@@ -697,6 +739,10 @@ public:
 
     Disk<_record>* getDisk() {
         return &disk;
+    }
+
+    AccessedNodesCounter getAccessedNodesCounter() {
+        return accessedNodesCounter;
     }
 
 #ifdef DEBUG

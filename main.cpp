@@ -173,7 +173,7 @@ void findBestN() {
     cout << "best n is " << bestN << " with runtime " << (double) bestClk / CLOCKS_PER_SEC << " s" << endl;
 }
 
-const int N = 16;
+const int N = 15;
 using tree = BPTree<_key, _record, N>;
 
 tree *constructTreeFromTsv(string filename) {
@@ -262,7 +262,7 @@ void experiment3(tree *tr) {
 
     cout << "number of records that numVotes = 500: " << records.size() << "\n";
 
-    //cout << "3.1. number of accessed tree nodes: " << tr -> accessedNodes() << "\n";
+    cout << "3.1. number of accessed tree nodes: " << tr -> getAccessedNodesCounter().getCount() << "\n";
     cout << "3.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
 
     int sum = 0;
@@ -295,7 +295,7 @@ void experiment4(tree *tr) {
 
     cout << "number of records that numVotes in [30000, 40000]: " << records.size() << "\n";
 
-    //cout << "4.1. number of accessed tree nodes: " << tr -> accessedNodes() << "\n";
+    cout << "4.1. number of accessed tree nodes: " << tr -> getAccessedNodesCounter().getCount() << "\n";
     cout << "4.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
 
     int sum = 0;
@@ -314,9 +314,36 @@ void experiment4(tree *tr) {
     cout << "Completed Experiment 4. " << "\n\n";
 }
 
+void experiment5(tree *tr) {
+    cout << "Start Experiment 5: " << "\n";
+
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+
+    tr -> removeAll(_key{1000});
+
+    end = clock();
+    cpu_time_used = (double) (end - start); //in clocks
+
+    cout << "5.1. updated number of tree nodes: " << tr -> nodeSize() << "\n";
+    cout << "5.2. updated tree height: " << tr -> height() << "\n";
+
+    cout << "5.3 keys of the root node: ";
+    tr->printRootInfo();
+    cout << "\n";
+
+    cout << "5.4. running time of deletion process: " << 1000.0 * (end - start) / CLOCKS_PER_SEC << " ms \n";
+
+    cout << "5.5.1 number of data blocks accessed in linear scan: " << "TODO" << "\n";
+    cout << "5.5.2 running time of linear scan: " << "TODO" << "\n";
+
+    cout << "Completed Experiment 5. " << "\n\n";
+}
+
 
 void runExperiment() {
-    tree *tr = constructTreeFromTsv("../data.tsv");
+    tree *tr = constructTreeFromTsv("data.tsv");
     printLinebreak();
     experiment1(tr);
     printLinebreak();
@@ -325,14 +352,14 @@ void runExperiment() {
     experiment3(tr);
     printLinebreak();
     experiment4(tr);
-    // ...
-    // ...
+    printLinebreak();
+    experiment5(tr);
 }
 
 int main() {
     srand(43); // for consistent output
-    correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
-    findBestN(); // simulate 1,000,000 insertions, and get best n (it might output different optimal n each time, but we will choose one in our following experiment)
+    //correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
+    //findBestN(); // simulate 1,000,000 insertions, and get best n (it might output different optimal n each time, but we will choose one in our following experiment)
     cout << sizeof(BPTree<_key, _record, MAXN>::node) << endl;
     cout << "experiment starts: " << endl;
     cout << "size of struct key: " << sizeof(_key) << "\n";
