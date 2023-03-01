@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <time.h>
+#include <chrono>
 #include "BPTree.h"
 
 using namespace std;
@@ -251,14 +252,14 @@ void experiment2(tree *tr) {
 void experiment3(tree *tr) {
     cout << "Start Emperiment 3: " << "\n";
 
-    clock_t start, end;
-    start = clock();
+    auto start = chrono::steady_clock::now();
 
     int accessedCnt = 0;
 
     vector<_record *> records = tr->query(_key{500}, _key{500}, &accessedCnt);
 
-    end = clock();
+    auto end = chrono::steady_clock::now();
+    auto diff = end - start;
 
     cout << "number of records that numVotes = 500: " << records.size() << "\n";
 
@@ -273,7 +274,7 @@ void experiment3(tree *tr) {
 
     cout << "3.3. average value of averageRating: " << avg << "\n";
 
-    cout << "3.4. running time of retrieval process: " << 1000.0 * (end - start) / CLOCKS_PER_SEC << " ms \n";
+    cout << "3.4. running time of retrieval process: " << chrono::duration <double, nano> (diff).count() << " ns \n";
 
     cout << "3.5.1 number of data blocks accessed in linear scan: " << "TODO" << "\n";
     cout << "3.5.2 running time of linear scan: " << "TODO" << "\n";
@@ -284,16 +285,14 @@ void experiment3(tree *tr) {
 void experiment4(tree *tr) {
     cout << "Start Experiment 4: " << "\n";
 
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
+    auto start = chrono::steady_clock::now();
 
     int accessedCnt = 0;
 
     vector<_record *> records = tr->query(_key{30000}, _key{40000}, &accessedCnt);
 
-    end = clock();
-    cpu_time_used = (double) (end - start); //in clocks
+    auto end = chrono::steady_clock::now();
+    auto diff = end - start;
 
     cout << "number of records that numVotes in [30000, 40000]: " << records.size() << "\n";
 
@@ -308,7 +307,7 @@ void experiment4(tree *tr) {
 
     cout << "4.3. average value of averageRating: " << avg << "\n";
 
-    cout << "4.4. running time of retrieval process: " << 1000.0 * (end - start) / CLOCKS_PER_SEC << " ms \n";
+    cout << "4.4. running time of retrieval process: " << chrono::duration <double, nano> (diff).count() << " ns \n";
 
     cout << "4.5.1 number of data blocks accessed in linear scan: " << "TODO" << "\n";
     cout << "4.5.2 running time of linear scan: " << "TODO" << "\n";
@@ -319,14 +318,12 @@ void experiment4(tree *tr) {
 void experiment5(tree *tr) {
     cout << "Start Experiment 5: " << "\n";
 
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
+    auto start = chrono::steady_clock::now();
 
     tr -> removeAll(_key{1000});
 
-    end = clock();
-    cpu_time_used = (double) (end - start); //in clocks
+    auto end = chrono::steady_clock::now();
+    auto diff = end - start;
 
     cout << "5.1. updated number of tree nodes: " << tr -> nodeSize() << "\n";
     cout << "5.2. updated tree height: " << tr -> height() << "\n";
@@ -335,7 +332,7 @@ void experiment5(tree *tr) {
     tr->printRootInfo();
     cout << "\n";
 
-    cout << "5.4. running time of deletion process: " << 1000.0 * (end - start) / CLOCKS_PER_SEC << " ms \n";
+    cout << "5.4. running time of deletion process: " << chrono::duration <double, nano> (diff).count() << " ns \n";
 
     cout << "5.5.1 number of data blocks accessed in linear scan: " << "TODO" << "\n";
     cout << "5.5.2 running time of linear scan: " << "TODO" << "\n";

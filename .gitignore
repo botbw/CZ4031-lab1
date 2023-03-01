@@ -6,4 +6,4 @@
 cmake-build-debug
 CMakeLists.txt
 lab.out
-test_result.txt
+*.txt
