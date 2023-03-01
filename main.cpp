@@ -230,7 +230,9 @@ void experiment1(tree *tr) {
     cout << "1.1 number of records: " << tr->size() << "\n";
     cout << "1.2 size of a record: " << sizeof(_record) << " bytes\n";
 
-    cout << "1.3 number of records stored in a block: " << tr->getDisk()->getNumRecordsPerBlock() << "\n";
+    tr->getDisk();
+
+    cout << "1.3 number of records stored in a block: " << sizeof(Block) / sizeof(_record) << "\n";
     cout << "1.4 number of blocks to storing data: " << tr->getDisk()->getAllocatedBlock() << "\n";
 
     cout << "Completed Experiment 1. " << "\n\n";
@@ -256,13 +258,15 @@ void experiment3(tree *tr) {
     clock_t start, end;
     start = clock();
 
-    vector<_record *> records = tr->query(_key{500}, _key{500});
+    int accessedCnt = 0;
+
+    vector<_record *> records = tr->query(_key{500}, _key{500}, &accessedCnt);
 
     end = clock();
 
     cout << "number of records that numVotes = 500: " << records.size() << "\n";
 
-    cout << "3.1. number of accessed tree nodes: " << tr -> getAccessedNodesCounter().getCount() << "\n";
+    cout << "3.1. number of accessed tree nodes: " << accessedCnt << "\n";
     cout << "3.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
 
     int sum = 0;
@@ -288,14 +292,16 @@ void experiment4(tree *tr) {
     double cpu_time_used;
     start = clock();
 
-    vector<_record *> records = tr->query(_key{30000}, _key{40000});
+    int accessedCnt = 0;
+
+    vector<_record *> records = tr->query(_key{30000}, _key{40000}, &accessedCnt);
 
     end = clock();
     cpu_time_used = (double) (end - start); //in clocks
 
     cout << "number of records that numVotes in [30000, 40000]: " << records.size() << "\n";
 
-    cout << "4.1. number of accessed tree nodes: " << tr -> getAccessedNodesCounter().getCount() << "\n";
+    cout << "4.1. number of accessed tree nodes: " << accessedCnt << "\n";
     cout << "4.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
 
     int sum = 0;

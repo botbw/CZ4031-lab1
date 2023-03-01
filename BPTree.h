@@ -13,28 +13,6 @@
 
 using namespace std;
 
-class AccessedNodesCounter {
-private:
-    int count;
-
-public:
-    AccessedNodesCounter() {
-        count = 0;
-    }
-
-    void clearCounter(){
-        count = 0;
-    }
-
-    void addCount() {
-        count += 1;
-    }
-
-    int getCount() {
-        return count;
-    }
-};
-
 template<typename _key, typename _record, int N>
 class BPTree {
 public:
@@ -91,11 +69,7 @@ private:
     int nodeCnt;   // node number of current tree
     int recordCnt; // record number of current tree
     node *root;    // root of the tree
-public:
     Disk<_record> disk; // disk for _record storage
-    AccessedNodesCounter accessedNodesCounter;
-
-private:
 
     // only for single node
     node *newNode() {
@@ -500,10 +474,8 @@ private:
     }
 
     // search lower_bound according to key (the first record_key >= key)
-    pair<node *, int> _lower_bound(node *cur, const _key &key) {
-
-        accessedNodesCounter.addCount();
-
+    pair<node *, int> _lower_bound(node *cur, const _key &key, int *accessedCnt) {
+        if(accessedCnt) (*accessedCnt)++;
         int i =
                 (int) (std::lower_bound(cur->keys, cur->keys + cur->cnt, key) - cur->keys);
         if (cur->height == 0) { // leaf node
@@ -514,11 +486,11 @@ private:
             if (i == cur->cnt)
                 i--;
             // in case there are multiple same keys, find the left-most one
-            pair<node *, int> leftSib = _lower_bound((node *) cur->childs[i], key);
+            pair<node *, int> leftSib = _lower_bound((node *) cur->childs[i], key, accessedCnt);
             if (leftSib.first) // found
                 return leftSib;
             // search key i
-            return _lower_bound((node *) cur->childs[i + 1], key);
+            return _lower_bound((node *) cur->childs[i + 1], key, accessedCnt);
         }
     }
 
@@ -538,7 +510,7 @@ private:
     }
 
 public:
-    BPTree() : nodeCnt{0}, recordCnt{0}, root{newNode()}, disk(DISK_MEM_SIZE), accessedNodesCounter{AccessedNodesCounter()} {}
+    BPTree() : nodeCnt{0}, recordCnt{0}, root{newNode()}, disk(DISK_MEM_SIZE) {}
 
     ~BPTree() {
         _destruct(root);
@@ -554,8 +526,8 @@ public:
         return *root;
     }
 
-    pair<node *, int> lower_bound(const _key &key) {
-        return _lower_bound(root, key);
+    pair<node *, int> lower_bound(const _key &key, int *accessedCnt = nullptr) {
+        return _lower_bound(root, key, accessedCnt);
     }
 
     // if key already exists, insert to upper bound
@@ -594,11 +566,9 @@ public:
     }
 
     // query single key, return nullptr if not exist
-    _record *query(const _key *key) {
+    _record *query(const _key *key, int *accessedCnt = nullptr) {
 
-        accessedNodesCounter.clearCounter();
-
-        pair<node *, int> q = lower_bound(root, key);
+        pair<node *, int> q = lower_bound(root, key, accessedCnt);
         node *p = q.first;
         int i = q.second;
         //node *p is accessed in the lower_bound function
@@ -609,12 +579,10 @@ public:
     }
 
     // query [lo, hi]
-    vector<_record *> query(const _key &lo, const _key &hi) {
-
-        accessedNodesCounter.clearCounter();
+    vector<_record *> query(const _key &lo, const _key &hi, int *accessedCnt = nullptr) {
 
         assert(lo <= hi);
-        pair<node *, int> q = lower_bound(lo);
+        pair<node *, int> q = lower_bound(lo, accessedCnt);
         node *p = q.first;
         int i = q.second;
         //node *p is accessed in the lower_bound function
@@ -628,7 +596,7 @@ public:
                 ret.push_back((_record *) p->childs[i]);
             }
             p = (node *) p->childs[N];
-            accessedNodesCounter.addCount();
+            if(accessedCnt) (*accessedCnt)++;
             i = 0;
         }
         return ret;
@@ -680,7 +648,7 @@ public:
         levelTraverse(root);
     }
 
-    bool selfCheck(node *cur) {
+    bool selfCheck(node *cur) const {
         if (cur->cnt > N) // obvious
             return false;
         if (cur->height == 0) { // leaf check
@@ -721,7 +689,7 @@ public:
     }
 
     // check the structure of BPTree (no simulation, only structure correctness)
-    bool selfCheck() {
+    bool selfCheck() const {
         auto tmp = lower_bound(-1);
         int i = tmp.second;
         node *p = tmp.first;
@@ -737,12 +705,8 @@ public:
         return is_sorted(a.begin(), a.end()) && selfCheck(root);
     }
 
-    Disk<_record>* getDisk() {
+    Disk<_record>* const getDisk() {
         return &disk;
-    }
-
-    AccessedNodesCounter getAccessedNodesCounter() {
-        return accessedNodesCounter;
     }
 
 #ifdef DEBUG
