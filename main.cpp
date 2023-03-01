@@ -38,10 +38,6 @@ struct _key {
         return key == b.key;
     }
 
-    friend string to_string(const _key &b) {
-        return to_string(b.key);
-    }
-
     friend std::ostream &operator<<(std::ostream &os, const _key &b) {
         os << b.key;
         return os;

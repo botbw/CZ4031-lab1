@@ -46,18 +46,6 @@ public:
             return os;
         }
 
-        // for debugging
-        friend string to_string(const node &n) {
-            string ret;
-            ret += "(" + to_string(n.height) + ")";
-            for (int i = 0; i < n.cnt; i++) {
-                ret += to_string(n.keys[i]);
-                ret += " ";
-            }
-            ret += "| ";
-            return ret;
-        }
-
         friend void print_keys(const node &n) {
             for (int i = 0; i < n.cnt; i++) {
                 cout << n.keys[i] << " ";
