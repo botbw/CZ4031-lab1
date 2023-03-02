@@ -104,12 +104,8 @@ public:
     }
 
     // in bytes
-    int getAllocatedMem() {
+    int getAllocatedMem() const {
         return allocated.size() * sizeof(T);
-    }
-
-    int getNumRecordsPerBlock() {
-        return sizeof(Block) / sizeof(T);
     }
 };
 
