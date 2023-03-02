@@ -286,8 +286,7 @@ void experiment2(tree *tr)
 
 void experiment3(tree *tr)
 {
-    cout << "Start Emperiment 3: "
-         << "\n";
+    cout << "Start Emperiment 3: " << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -298,7 +297,7 @@ void experiment3(tree *tr)
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "number of records that numVotes = 500: " << precords.size() << "\n";
+    cout << "number of records that satisfies (numVotes = 500)  : " << precords.size() << "\n";
 
     cout << "3.1. number of accessed tree nodes: " << accessedCnt << "\n";
 
@@ -317,7 +316,7 @@ void experiment3(tree *tr)
             if(r.numVotes == 500) records.push_back(r);
         }
     }
-    cout << "4.2. number of accessed data blocks: " << uniBlk.size() << "\n";
+    cout << "3.2. number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -327,42 +326,43 @@ void experiment3(tree *tr)
 
     cout << "3.3. average value of averageRating: " << avg << "\n";
     cout << "3.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
-/*
+
     start = chrono::steady_clock::now();
 
-    precords = tr -> getDisk() -> getAllocated();
-    p = tr->getDisk()->accessRecordFromDisk(precords);
-    numAccessedBlock = p.first;
-    records = p.second;
+    disk->innitializeScan();
+    vector<_record> blk_records = disk->linearScanNextBlk();
 
     sum = 0;
     int cnt = 0;
-    for (int i = 0; i < records.size(); i++) {
-        int key = records[i].numVotes;
-        if(key==500){
-            sum += records[i].rating;
-            cnt += 1;
+    int numAccessedBlock = 0;
+    while(blk_records.size() != 0){
+
+        numAccessedBlock ++;
+        for(auto r: blk_records){
+            if(r.numVotes == 500)  {
+                sum += r.rating;
+                cnt += 1;
+            }
         }
+        blk_records = disk->linearScanNextBlk();
     }
     avg = double(sum) / 10.0 / cnt;
 
     end = chrono::steady_clock::now();
     diff = end - start;
 
-    cout << "4.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
-    cout << "4.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "4.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "3.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
+    cout << "3.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "3.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
-    cout << "Completed Experiment 3. "
-         << "\n\n";
-         */
+    cout << "Completed Experiment 3. " << "\n\n";
+         
 }
 
-/*
+
 void experiment4(tree *tr)
 {
-    cout << "Start Experiment 4: "
-         << "\n";
+    cout << "Start Emperiment 4: " << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -373,14 +373,26 @@ void experiment4(tree *tr)
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "number of records that numVotes in [30000, 40000]: " << precords.size() << "\n";
+    cout << "number of records that satisfies (numVotes in [30000, 40000])  : " << precords.size() << "\n";
 
     cout << "4.1. number of accessed tree nodes: " << accessedCnt << "\n";
 
-    auto  p = tr->getDisk()->accessRecordFromDisk(precords);
-    int numAccessedBlock = p.first;
-    vector<_record> records = p.second;
-    cout << "4.2. number of accessed data blocks: " << numAccessedBlock << "\n";
+    auto disk = tr->getDisk();
+
+    unordered_set<Block*> uniBlk;
+    for(auto pRecord: precords) {
+        Block *blk = disk->blkOf(pRecord);
+        uniBlk.insert(blk);
+    }
+    vector<_record> records;
+
+    for(auto pBlk : uniBlk) {
+        auto tmp = disk->getAllFromBlock(pBlk);
+        for(auto r:tmp) {
+            if(r.numVotes>= 30000 && r.numVotes<= 40000) records.push_back(r);
+        }
+    }
+    cout << "4.2. number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -389,25 +401,26 @@ void experiment4(tree *tr)
     double avg = double(sum) / 10.0 / records.size();
 
     cout << "4.3. average value of averageRating: " << avg << "\n";
-
     cout << "4.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
-
 
     start = chrono::steady_clock::now();
 
-    precords = tr -> getDisk() -> getAllocated();
-    p = tr->getDisk()->accessRecordFromDisk(precords);
-    numAccessedBlock = p.first;
-    records = p.second;
+    disk->innitializeScan();
+    vector<_record> blk_records = disk->linearScanNextBlk();
 
     sum = 0;
     int cnt = 0;
-    for (int i = 0; i < records.size(); i++) {
-        int key = records[i].numVotes;
-        if(key>=30000 && key<=40000){
-            sum += records[i].rating;
-            cnt += 1;
+    int numAccessedBlock = 0;
+    while(blk_records.size() != 0){
+
+        numAccessedBlock ++;
+        for(auto r: blk_records){
+            if(r.numVotes>= 30000 && r.numVotes<= 40000)  {
+                sum += r.rating;
+                cnt += 1;
+            }
         }
+        blk_records = disk->linearScanNextBlk();
     }
     avg = double(sum) / 10.0 / cnt;
 
@@ -418,11 +431,10 @@ void experiment4(tree *tr)
     cout << "4.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
     cout << "4.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
-    cout << "Completed Experiment 4. "
-         << "\n\n";
+    cout << "Completed Experiment 4. " << "\n\n";
 }
 
-*/
+
 
 void experiment5(tree *tr)
 {
@@ -443,7 +455,7 @@ void experiment5(tree *tr)
     tr->printRootInfo();
     cout << "\n";
 
-    cout << "5.4. running time of deletion process: " << chrono::duration<double, nano>(diff).count() << " ns \n";
+    cout << "5.4. running time of deletion process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
     cout << "5.5.1 number of data blocks accessed in linear scan: "
          << "TODO"
@@ -458,7 +470,7 @@ void experiment5(tree *tr)
 
 
 void runExperiment() {
-    tree *tr = constructTreeFromTsv("../data.tsv");
+    tree *tr = constructTreeFromTsv("data.tsv");
     printLinebreak();
     experiment1(tr);
     printLinebreak();
@@ -466,7 +478,7 @@ void runExperiment() {
     printLinebreak();
     experiment3(tr);
     printLinebreak();
-//    experiment4(tr);
+    experiment4(tr);
     printLinebreak();
     //experiment5(tr);
 }
@@ -475,12 +487,13 @@ int main()
 {
     srand(43); // for consistent output
     // correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
-    //    findBestN(); // simulate 1,000,000 insertions, and get best n (it might output different optimal n each time, but we will choose one in our following experiment)
-    cout << sizeof(BPTree<_key, _record, MAXN>::node) << endl;
-    cout << "experiment starts: " << endl;
+    //    findBestN(); // simulate 1,000,000 insertions, and get best n 
+    // (it might output different optimal n each time, but we will choose one in our following experiment)
     cout << "size of struct key: " << sizeof(_key) << "\n";
     cout << "size of struct record: " << sizeof(_record) << "\n";
     cout << "Set parameter N = " << N << ", so the size of tree node is " << sizeof(tree::node) << " bytes\n";
+
+    cout << "experiment starts: " << endl;
     //clock_t start = clock();
     runExperiment();
     //clock_t duration = clock() - start;

@@ -25,6 +25,8 @@ private:
 
     // the index of first available block
     int blkId;
+    // the index of the next block to scan
+    int nextScanBlkId;
     // simulate cache (size 1)
     Block cache;
 
@@ -54,14 +56,15 @@ private:
 public:
     Disk(int _poolSize) : poolSize{_poolSize}, numBlock{poolSize / (int) sizeof(Block)},
                           numTPerBlk{sizeof(Block) / sizeof(T)}, rawDisk{new char[poolSize]},
-                          bitmap(numBlock, vector<bool>(numTPerBlk)), blkId{0} {
+                          bitmap(numBlock, vector<bool>(numTPerBlk)), blkId{0}, nextScanBlkId{0} {
         assert(poolSize >= sizeof(Block));
         assert(sizeof(Block) >= sizeof(T));
     }
 
     Disk(const Disk &b) : poolSize{b.poolSize}, numBlock{b.numBlock},
                           numTPerBlk{b.numTPerBlk}, rawDisk{new char[poolSize]},
-                          unallocated{b.unallocated}, bitmap{b.bitmap}, blkId{b.blkId}, cache{b.cache} {
+                          unallocated{b.unallocated}, bitmap{b.bitmap}, blkId{b.blkId}, 
+                          nextScanBlkId{0}, cache{b.cache} {
         memcpy(this->rawDisk, b.rawDisk, sizeof(char) * poolSize);
     }
 
@@ -161,6 +164,36 @@ public:
             if (allocated) cnt++;
         }
         return cnt;
+    }
+
+    void innitializeScan() {
+        nextScanBlkId = 0;
+    }
+
+    vector<T> linearScanNextBlk() {
+        vector<T> ret;
+        bool allocated = false;
+
+        Block *blkStart = (Block *) rawDisk;
+        Block *curBlk = blkStart + nextScanBlkId;
+
+        do{
+            if(nextScanBlkId==blkId) return vector<T>();
+
+            curBlk = blkStart + nextScanBlkId;
+            int i = nextScanBlkId;
+            
+            for (int j = 0; j < numTPerBlk; j++) {
+                if (bitmap[i][j]) {
+                    allocated = true;
+                    break;
+                }
+            }
+
+            nextScanBlkId ++;
+        }while(! allocated);
+
+        return getAllFromBlock(curBlk);
     }
 };
 
