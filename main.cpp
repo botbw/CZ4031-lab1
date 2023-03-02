@@ -243,7 +243,7 @@ tree *constructTreeFromTsv(string filename)
     }
     fin.close();
 
-    cout << cnt << endl;
+    cout << "number of records read: " << cnt << endl;
     cout << "max of numVotes = " << max_numVotes << ", max of tconst = " << max_tconst << "\n";
 
     return trp;
@@ -299,7 +299,7 @@ void experiment3(tree *tr)
 
     cout << "number of records that satisfies (numVotes = 500)  : " << precords.size() << "\n";
 
-    cout << "3.1. number of accessed tree nodes: " << accessedCnt << "\n";
+    cout << "3.1 number of accessed tree nodes: " << accessedCnt << "\n";
 
     auto disk = tr->getDisk();
 
@@ -316,7 +316,7 @@ void experiment3(tree *tr)
             if(r.numVotes == 500) records.push_back(r);
         }
     }
-    cout << "3.2. number of accessed data blocks: " << uniBlk.size() << "\n";
+    cout << "3.2 number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -324,8 +324,8 @@ void experiment3(tree *tr)
     }
     double avg = double(sum) / 10.0 / records.size();
 
-    cout << "3.3. average value of averageRating: " << avg << "\n";
-    cout << "3.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "3.3 average value of averageRating: " << avg << "\n";
+    cout << "3.4 running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
     start = chrono::steady_clock::now();
 
@@ -375,7 +375,7 @@ void experiment4(tree *tr)
 
     cout << "number of records that satisfies (numVotes in [30000, 40000])  : " << precords.size() << "\n";
 
-    cout << "4.1. number of accessed tree nodes: " << accessedCnt << "\n";
+    cout << "4.1 number of accessed tree nodes: " << accessedCnt << "\n";
 
     auto disk = tr->getDisk();
 
@@ -392,7 +392,7 @@ void experiment4(tree *tr)
             if(r.numVotes>= 30000 && r.numVotes<= 40000) records.push_back(r);
         }
     }
-    cout << "4.2. number of accessed data blocks: " << uniBlk.size() << "\n";
+    cout << "4.2 number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -400,8 +400,8 @@ void experiment4(tree *tr)
     }
     double avg = double(sum) / 10.0 / records.size();
 
-    cout << "4.3. average value of averageRating: " << avg << "\n";
-    cout << "4.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "4.3 average value of averageRating: " << avg << "\n";
+    cout << "4.4 running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
     start = chrono::steady_clock::now();
 
@@ -434,12 +434,33 @@ void experiment4(tree *tr)
     cout << "Completed Experiment 4. " << "\n\n";
 }
 
+int numOfKeyInDisk(Disk<_record> *disk, int key){
+
+    disk->innitializeScan();
+    vector<_record> blk_records = disk->linearScanNextBlk();
+    int cnt = 0;
+    while(blk_records.size() != 0){
+        for(auto r: blk_records){
+            if(r.numVotes == key)  {
+                cnt += 1;
+            }
+        }
+        blk_records = disk->linearScanNextBlk();
+    }
+    return cnt;
+}
 
 
 void experiment5(tree *tr)
 {
-    cout << "Start Experiment 5: "
-         << "\n";
+    cout << "Start Experiment 5: " << "\n";
+
+    Disk disk_copy = Disk(* (tr->getDisk()) );
+
+    vector<_record *> precords = tr->query(_key{1000}, _key{1000});
+    int numOfKeyInTree = precords.size();
+
+    cout << "5.0 number of records to delete (numVotes = 1000)  : " <<  numOfKeyInTree << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -448,24 +469,53 @@ void experiment5(tree *tr)
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "5.1. updated number of tree nodes: " << tr->nodeSize() << "\n";
-    cout << "5.2. updated tree height: " << tr->height() << "\n";
+    cout << "5.1 updated number of tree nodes: " << tr->nodeSize() << "\n";
+    cout << "5.2 updated tree height: " << tr->height() << "\n";
 
     cout << "5.3 keys of the root node: ";
     tr->printRootInfo();
     cout << "\n";
 
-    cout << "5.4. running time of deletion process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "5.4 running time of deletion process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
-    cout << "5.5.1 number of data blocks accessed in linear scan: "
-         << "TODO"
-         << "\n";
-    cout << "5.5.2 running time of linear scan: "
-         << "TODO"
-         << "\n";
+    //get number of records that (numVoted = 1000) in disk_copy before delete
+    int numTargetBeforeD = numOfKeyInDisk(&disk_copy, 1000);
+    assert(numOfKeyInTree == numTargetBeforeD);
 
-    cout << "Completed Experiment 5. "
-         << "\n\n";
+    //delete the records
+    start = chrono::steady_clock::now();
+
+    disk_copy.innitializeScan();
+
+    vector<_record> blk_records = disk_copy.linearScanNextBlk();
+    int numAccessedBlock = 0;
+
+    while(blk_records.size() != 0){
+        numAccessedBlock ++;
+        unordered_set<int> vjs;
+
+        for(int i=0; i<blk_records.size();i++){
+            _record r = blk_records[i];
+            if(r.numVotes == 1000)  {
+                vjs.insert(i);
+            }
+        }
+        if(vjs.size()>0) disk_copy.deleteFromLastScanedBlkForLinearScan(vjs);
+
+        blk_records = disk_copy.linearScanNextBlk();
+    }
+    
+    end = chrono::steady_clock::now();
+    diff = end - start;
+
+    //get number of records that (numVoted = 1000) in disk_copy after delete
+    int numTargetAfterD = numOfKeyInDisk(&disk_copy, 1000);
+
+    cout << "5.5.0 number of records (numVotes = 1000) decreases from " << numTargetBeforeD << " to " << numTargetAfterD << " after linear-scan deletion\n";
+    cout << "5.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "5.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+
+    cout << "Completed Experiment 5. " << "\n\n";
 }
 
 
@@ -480,7 +530,7 @@ void runExperiment() {
     printLinebreak();
     experiment4(tr);
     printLinebreak();
-    //experiment5(tr);
+    experiment5(tr);
 }
 
 int main()
