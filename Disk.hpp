@@ -62,7 +62,6 @@ public:
             {
                 T *curT = tStart + j;
                 unallocated.push(curT);
-                blkOf[curT] = curBlk;
             }
             blkId++;
         }
@@ -93,7 +92,7 @@ public:
         unordered_map<Block *, vector<int>> diskMapping;
         for (auto pT : pTs)
         {
-            Block *pBlk = blkOf[pT];
+            Block *pBlk = blkOf(pT);
             T *pTSt = (T *)pBlk;
             int slotId = (int)(pT - pTSt);
             diskMapping[pBlk].push_back(slotId);
@@ -118,7 +117,7 @@ public:
     {
         unordered_set<Block *> cntBlock;
         for (auto pT : allocated)
-            cntBlock.insert(blkOf[pT]);
+            cntBlock.insert(blkOf(pT));
         return cntBlock.size();
     }
 
