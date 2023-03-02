@@ -16,7 +16,7 @@ const int MAXN = 15;
 
 struct _key
 {
-    unsigned int key : 24;
+    unsigned int key : 32;
 
     // functional comparator, for BPTree
     bool operator<(const _key &b) const
@@ -59,7 +59,7 @@ struct _record
 {
     unsigned int tConst : 24;
     unsigned int rating : 8;
-    unsigned int numVotes : 24;
+    unsigned int numVotes : 32;
 };
 #pragma pack(0)
 
@@ -283,6 +283,7 @@ void experiment2(tree *tr)
          << "\n\n";
 }
 
+
 void experiment3(tree *tr)
 {
     cout << "Start Emperiment 3: "
@@ -300,10 +301,23 @@ void experiment3(tree *tr)
     cout << "number of records that numVotes = 500: " << precords.size() << "\n";
 
     cout << "3.1. number of accessed tree nodes: " << accessedCnt << "\n";
-    auto  p = tr->getDisk()->accessRecordFromDisk(precords);
-    int numAccessedBlock = p.first;
-    vector<_record> records = p.second;
-    cout << "4.2. number of accessed data blocks: " << numAccessedBlock << "\n";
+
+    auto disk = tr->getDisk();
+
+    unordered_set<Block*> uniBlk;
+    for(auto pRecord: precords) {
+        Block *blk = disk->blkOf(pRecord);
+        uniBlk.insert(blk);
+    }
+    vector<_record> records;
+
+    for(auto pBlk : uniBlk) {
+        auto tmp = disk->getAllFromBlock(pBlk);
+        for(auto r:tmp) {
+            if(r.numVotes == 500) records.push_back(r);
+        }
+    }
+    cout << "4.2. number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -313,7 +327,7 @@ void experiment3(tree *tr)
 
     cout << "3.3. average value of averageRating: " << avg << "\n";
     cout << "3.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
-
+/*
     start = chrono::steady_clock::now();
 
     precords = tr -> getDisk() -> getAllocated();
@@ -341,8 +355,10 @@ void experiment3(tree *tr)
 
     cout << "Completed Experiment 3. "
          << "\n\n";
+         */
 }
 
+/*
 void experiment4(tree *tr)
 {
     cout << "Start Experiment 4: "
@@ -406,6 +422,8 @@ void experiment4(tree *tr)
          << "\n\n";
 }
 
+*/
+
 void experiment5(tree *tr)
 {
     cout << "Start Experiment 5: "
@@ -440,7 +458,7 @@ void experiment5(tree *tr)
 
 
 void runExperiment() {
-    tree *tr = constructTreeFromTsv("data.tsv");
+    tree *tr = constructTreeFromTsv("../data.tsv");
     printLinebreak();
     experiment1(tr);
     printLinebreak();
@@ -448,7 +466,7 @@ void runExperiment() {
     printLinebreak();
     experiment3(tr);
     printLinebreak();
-    experiment4(tr);
+//    experiment4(tr);
     printLinebreak();
     //experiment5(tr);
 }
