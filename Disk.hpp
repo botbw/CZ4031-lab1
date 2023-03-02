@@ -23,7 +23,13 @@ private:
     // allocated T*
     unordered_set<T *> allocated;
     // from node to block
-    unordered_map<T *, Block *> blkOf;
+//    unordered_map<T *, Block *> blkOf;
+    inline Block* blkOf(T *r) {
+        char *pr = (char*) r;
+        int id = int(pr - rawDisk) / sizeof(Block);
+        Block *st = (Block*) rawDisk;
+        return st + id;
+    }
     // the index of first available block
     int blkId;
     // assume cache is one block
