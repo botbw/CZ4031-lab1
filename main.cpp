@@ -292,33 +292,52 @@ void experiment3(tree *tr)
 
     int accessedCnt = 0;
 
-    vector<_record *> records = tr->query(_key{500}, _key{500}, &accessedCnt);
+    vector<_record *> precords = tr->query(_key{500}, _key{500}, &accessedCnt);
 
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "number of records that numVotes = 500: " << records.size() << "\n";
+    cout << "number of records that numVotes = 500: " << precords.size() << "\n";
 
     cout << "3.1. number of accessed tree nodes: " << accessedCnt << "\n";
-    cout << "3.2. number of accessed data blocks: " << tr->getDisk()->accessedBlock(records) << "\n";
+    auto  p = tr->getDisk()->accessRecordFromDisk(precords);
+    int numAccessedBlock = p.first;
+    vector<_record> records = p.second;
+    cout << "4.2. number of accessed data blocks: " << numAccessedBlock << "\n";
 
     int sum = 0;
-    for (int i = 0; i < records.size(); i++)
-    {
-        sum += records[i]->rating;
+    for (int i = 0; i < records.size(); i++) {
+        sum += records[i].rating;
     }
     double avg = double(sum) / 10.0 / records.size();
 
     cout << "3.3. average value of averageRating: " << avg << "\n";
+    cout << "3.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
-    cout << "3.4. running time of retrieval process: " << chrono::duration<double, nano>(diff).count() << " ns \n";
+    start = chrono::steady_clock::now();
 
-    cout << "3.5.1 number of data blocks accessed in linear scan: "
-         << "TODO"
-         << "\n";
-    cout << "3.5.2 running time of linear scan: "
-         << "TODO"
-         << "\n";
+    precords = tr -> getDisk() -> getAllocated();
+    p = tr->getDisk()->accessRecordFromDisk(precords);
+    numAccessedBlock = p.first;
+    records = p.second;
+
+    sum = 0;
+    int cnt = 0;
+    for (int i = 0; i < records.size(); i++) {
+        int key = records[i].numVotes;
+        if(key==500){
+            sum += records[i].rating;
+            cnt += 1;
+        }
+    }
+    avg = double(sum) / 10.0 / cnt;
+
+    end = chrono::steady_clock::now();
+    diff = end - start;
+
+    cout << "4.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
+    cout << "4.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "4.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
     cout << "Completed Experiment 3. "
          << "\n\n";
@@ -333,33 +352,55 @@ void experiment4(tree *tr)
 
     int accessedCnt = 0;
 
-    vector<_record *> records = tr->query(_key{30000}, _key{40000}, &accessedCnt);
+    vector<_record *> precords = tr->query(_key{30000}, _key{40000}, &accessedCnt);
 
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "number of records that numVotes in [30000, 40000]: " << records.size() << "\n";
+    cout << "number of records that numVotes in [30000, 40000]: " << precords.size() << "\n";
 
     cout << "4.1. number of accessed tree nodes: " << accessedCnt << "\n";
-    cout << "4.2. number of accessed data blocks: " << tr->getDisk()->accessedBlock(records) << "\n";
+
+    auto  p = tr->getDisk()->accessRecordFromDisk(precords);
+    int numAccessedBlock = p.first;
+    vector<_record> records = p.second;
+    cout << "4.2. number of accessed data blocks: " << numAccessedBlock << "\n";
 
     int sum = 0;
-    for (int i = 0; i < records.size(); i++)
-    {
-        sum += records[i]->rating;
+    for (int i = 0; i < records.size(); i++) {
+        sum += records[i].rating;
     }
     double avg = double(sum) / 10.0 / records.size();
 
     cout << "4.3. average value of averageRating: " << avg << "\n";
 
-    cout << "4.4. running time of retrieval process: " << chrono::duration<double, nano>(diff).count() << " ns \n";
+    cout << "4.4. running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
-    cout << "4.5.1 number of data blocks accessed in linear scan: "
-         << "TODO"
-         << "\n";
-    cout << "4.5.2 running time of linear scan: "
-         << "TODO"
-         << "\n";
+
+    start = chrono::steady_clock::now();
+
+    precords = tr -> getDisk() -> getAllocated();
+    p = tr->getDisk()->accessRecordFromDisk(precords);
+    numAccessedBlock = p.first;
+    records = p.second;
+
+    sum = 0;
+    int cnt = 0;
+    for (int i = 0; i < records.size(); i++) {
+        int key = records[i].numVotes;
+        if(key>=30000 && key<=40000){
+            sum += records[i].rating;
+            cnt += 1;
+        }
+    }
+    avg = double(sum) / 10.0 / cnt;
+
+    end = chrono::steady_clock::now();
+    diff = end - start;
+
+    cout << "4.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
+    cout << "4.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "4.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
 
     cout << "Completed Experiment 4. "
          << "\n\n";
@@ -397,9 +438,9 @@ void experiment5(tree *tr)
          << "\n\n";
 }
 
-void runExperiment()
-{
-    tree *tr = constructTreeFromTsv("../data.tsv");
+
+void runExperiment() {
+    tree *tr = constructTreeFromTsv("data.tsv");
     printLinebreak();
     experiment1(tr);
     printLinebreak();
@@ -409,7 +450,7 @@ void runExperiment()
     printLinebreak();
     experiment4(tr);
     printLinebreak();
-    experiment5(tr);
+    //experiment5(tr);
 }
 
 int main()
@@ -422,9 +463,9 @@ int main()
     cout << "size of struct key: " << sizeof(_key) << "\n";
     cout << "size of struct record: " << sizeof(_record) << "\n";
     cout << "Set parameter N = " << N << ", so the size of tree node is " << sizeof(tree::node) << " bytes\n";
-    clock_t start = clock();
+    //clock_t start = clock();
     runExperiment();
-    clock_t duration = clock() - start;
-    cout << "Execution time: " << double(duration) / CLOCKS_PER_SEC << " seconds" << endl;
+    //clock_t duration = clock() - start;
+    //cout << "Execution time: " << double (duration) / CLOCKS_PER_SEC << " seconds" << endl;
     return 0;
 }
