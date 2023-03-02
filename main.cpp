@@ -10,7 +10,7 @@
 
 using namespace std;
 
-const int MAXN = 16;
+const int MAXN = 15;
 
 #pragma pack(1) // might not work on x86
 
@@ -264,7 +264,7 @@ void experiment3(tree *tr) {
     cout << "number of records that numVotes = 500: " << records.size() << "\n";
 
     cout << "3.1. number of accessed tree nodes: " << accessedCnt << "\n";
-    cout << "3.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
+    cout << "3.2. number of accessed data blocks: " << tr->getDisk()->accessedBlock(records) << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -297,7 +297,7 @@ void experiment4(tree *tr) {
     cout << "number of records that numVotes in [30000, 40000]: " << records.size() << "\n";
 
     cout << "4.1. number of accessed tree nodes: " << accessedCnt << "\n";
-    cout << "4.2. number of accessed data blocks: " << tr->getDisk()->getAccessedBlock(records) << "\n";
+    cout << "4.2. number of accessed data blocks: " << tr->getDisk()->accessedBlock(records) << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -342,7 +342,7 @@ void experiment5(tree *tr) {
 
 
 void runExperiment() {
-    tree *tr = constructTreeFromTsv("data.tsv");
+    tree *tr = constructTreeFromTsv("../data.tsv");
     printLinebreak();
     experiment1(tr);
     printLinebreak();
@@ -358,7 +358,7 @@ void runExperiment() {
 int main() {
     srand(43); // for consistent output
     //correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
-    //findBestN(); // simulate 1,000,000 insertions, and get best n (it might output different optimal n each time, but we will choose one in our following experiment)
+//    findBestN(); // simulate 1,000,000 insertions, and get best n (it might output different optimal n each time, but we will choose one in our following experiment)
     cout << sizeof(BPTree<_key, _record, MAXN>::node) << endl;
     cout << "experiment starts: " << endl;
     cout << "size of struct key: " << sizeof(_key) << "\n";
