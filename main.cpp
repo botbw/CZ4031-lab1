@@ -16,7 +16,7 @@ const int MAXN = 15;
 
 struct _key
 {
-    unsigned int key : 32;
+    unsigned int key : 24;
 
     // functional comparator, for BPTree
     bool operator<(const _key &b) const
@@ -59,7 +59,7 @@ struct _record
 {
     unsigned int tConst : 24;
     unsigned int rating : 8;
-    unsigned int numVotes : 32;
+    unsigned int numVotes : 24;
 };
 #pragma pack(0)
 
