@@ -14,39 +14,32 @@ const int MAXN = 15;
 
 #pragma pack(1) // might not work on x86
 
-struct _key
-{
-    unsigned int key : 24;
+struct _key {
+    unsigned int key: 24;
 
     // functional comparator, for BPTree
-    bool operator<(const _key &b) const
-    {
+    bool operator<(const _key &b) const {
         return key < b.key;
     }
 
     // for assertion and other purposes
-    bool operator<=(const _key &b) const
-    {
+    bool operator<=(const _key &b) const {
         return key <= b.key;
     }
 
-    bool operator>(const _key &b) const
-    {
+    bool operator>(const _key &b) const {
         return key > b.key;
     }
 
-    bool operator>=(const _key &b) const
-    {
+    bool operator>=(const _key &b) const {
         return key >= b.key;
     }
 
-    bool operator==(const _key &b) const
-    {
+    bool operator==(const _key &b) const {
         return key == b.key;
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const _key &b)
-    {
+    friend std::ostream &operator<<(std::ostream &os, const _key &b) {
         os << b.key;
         return os;
     }
@@ -55,27 +48,24 @@ struct _key
 #pragma pack(0)
 
 #pragma pack(1) // might not work on x86
-struct _record
-{
-    unsigned int tConst : 24;
-    unsigned int rating : 8;
-    unsigned int numVotes : 24;
+struct _record {
+    unsigned int tConst: 24;
+    unsigned int rating: 8;
+    unsigned int numVotes: 24;
 };
 #pragma pack(0)
 
-void printLinebreak()
-{
+void printLinebreak() {
     cout << "---------------------------------------------------------------------";
     cout << endl;
 }
 
-template <int n>
-void correctnessTest()
-{
+template<int n>
+void correctnessTest() {
     using tree = BPTree<int, int, n>;
 
     // selfCheck take a lot of time, OPERATIONS cannot be too large
-    const int OPERATIONS = 10000;
+    const int OPERATIONS = 100000;
     int range = rand();
 
     tree tr;
@@ -84,50 +74,41 @@ void correctnessTest()
 
     cout << OPERATIONS << " random operations (insert, delete, query) on BPTree<int, int, " << n << ">" << endl;
 
-    for (int i = 1; i <= OPERATIONS; i++)
-    {
+    for (int i = 1; i <= OPERATIONS; i++) {
         int op = rand() % 3;
-        if (op == 0)
-        { // insert
+        if (op == 0) { // insert
             int num = rand() % range;
             tr.insert(num, num);
             insertedVal.push_back(num);
             sett.insert(num);
             assert(tr.selfCheck());
-        }
-        else if (op == 1)
-        { // delete
-            if (insertedVal.size() == 0)
-            {
+        } else if (op == 1) { // delete
+            if (insertedVal.size() == 0) {
                 i--;
                 continue;
             }
-            int id = rand() % ((int)insertedVal.size());
+            int id = rand() % ((int) insertedVal.size());
             bool deleted = tr.remove(insertedVal[id]);
             bool _deleted = sett.count(insertedVal[id]);
             if (_deleted)
                 sett.erase(sett.find(insertedVal[id]));
             assert(deleted == _deleted);
             assert(tr.selfCheck());
-        }
-        else
-        { // query
-            if (insertedVal.size() == 0)
-            {
+        } else { // query
+            if (insertedVal.size() == 0) {
                 i--;
                 continue;
             }
             // two random value from insert history
-            int id1 = rand() % ((int)insertedVal.size());
-            int id2 = rand() % ((int)insertedVal.size());
+            int id1 = rand() % ((int) insertedVal.size());
+            int id2 = rand() % ((int) insertedVal.size());
             int shiftRange = range / 10;
             int offset = (rand() % shiftRange) - (shiftRange / 2);
             int lo = min(insertedVal[id1] + offset, insertedVal[id2] + offset);
             int hi = max(insertedVal[id1] + offset, insertedVal[id2] + offset);
             auto tmp = tr.query(lo, hi); // [lo, hi]
             vector<int> q1;
-            for (auto p : tmp)
-            {
+            for (auto p: tmp) {
                 q1.push_back(*p);
             }
             auto it1 = sett.lower_bound(lo), it2 = sett.upper_bound(hi);
@@ -141,19 +122,17 @@ void correctnessTest()
     correctnessTest<n - 1>();
 }
 
-template <>
-void correctnessTest<1>()
-{
+template<>
+void correctnessTest<1>() {
     return;
 }
 
-template <int n>
-void insertionEfficiencyTest(int &bestN, int &bestClk)
-{
+template<int n>
+void insertionEfficiencyTest(int &bestN, int &bestClk) {
     using tree = BPTree<int, int, n>;
 
     // around the number of data.tsv
-    const int OPERATIONS = 1000000;
+    const int OPERATIONS = 10000000;
     int range = rand();
 
     tree tr;
@@ -162,8 +141,7 @@ void insertionEfficiencyTest(int &bestN, int &bestClk)
 
     clock_t st = clock();
 
-    for (int i = 1; i <= OPERATIONS; i++)
-    {
+    for (int i = 1; i <= OPERATIONS; i++) {
         int num = rand() % range;
         clock_t st = clock();
         tr.insert(num, num);
@@ -171,36 +149,32 @@ void insertionEfficiencyTest(int &bestN, int &bestClk)
 
     clock_t duration = clock() - st;
 
-    if (duration < bestClk)
-    {
+    if (duration < bestClk) {
         bestClk = duration;
         bestN = n;
     }
 
-    cout << "runtime for " << n << " : " << (double)duration / CLOCKS_PER_SEC << " s" << endl;
+    cout << "runtime for " << n << " : " << (double) duration / CLOCKS_PER_SEC << " s" << endl;
     printLinebreak();
 
     insertionEfficiencyTest<n - 1>(bestN, bestClk);
 }
 
-template <>
-void insertionEfficiencyTest<1>(int &bestN, int &bestClk)
-{
+template<>
+void insertionEfficiencyTest<1>(int &bestN, int &bestClk) {
     return;
 }
 
-void findBestN()
-{
+void findBestN() {
     int bestN = 0, bestClk = INT32_MAX;
     insertionEfficiencyTest<MAXN>(bestN, bestClk);
-    cout << "best n is " << bestN << " with runtime " << (double)bestClk / CLOCKS_PER_SEC << " s" << endl;
+    cout << "best n is " << bestN << " with runtime " << (double) bestClk / CLOCKS_PER_SEC << " s" << endl;
 }
 
 const int N = 15;
 using tree = BPTree<_key, _record, N>;
 
-tree *constructTreeFromTsv(string filename)
-{
+tree *constructTreeFromTsv(string filename) {
     // definition of B+ tree
     using tree = BPTree<_key, _record, N>;
     using node = tree::node;
@@ -209,8 +183,7 @@ tree *constructTreeFromTsv(string filename)
     tree *trp = new tree();
 
     ifstream fin(filename);
-    if (!fin)
-    {
+    if (!fin) {
         throw runtime_error("data.tsv not found");
     }
     string line;
@@ -220,8 +193,7 @@ tree *constructTreeFromTsv(string filename)
     unsigned int max_tconst = 0;
 
     int cnt = 0;
-    while (getline(fin, line))
-    {
+    while (getline(fin, line)) {
         cnt++;
         istringstream is(line);
         string tconst_str;
@@ -249,8 +221,7 @@ tree *constructTreeFromTsv(string filename)
     return trp;
 }
 
-void experiment1(tree *tr)
-{
+void experiment1(tree *tr) {
     cout << "Start Emperiment 1: "
          << "\n";
 
@@ -266,8 +237,7 @@ void experiment1(tree *tr)
          << "\n\n";
 }
 
-void experiment2(tree *tr)
-{
+void experiment2(tree *tr) {
     cout << "Start Emperiment 2: "
          << "\n";
 
@@ -284,8 +254,7 @@ void experiment2(tree *tr)
 }
 
 
-void experiment3(tree *tr)
-{
+void experiment3(tree *tr) {
     cout << "Start Emperiment 3: " << "\n";
 
     auto start = chrono::steady_clock::now();
@@ -303,17 +272,17 @@ void experiment3(tree *tr)
 
     auto disk = tr->getDisk();
 
-    unordered_set<Block*> uniBlk;
-    for(auto pRecord: precords) {
+    unordered_set<Block *> uniBlk;
+    for (auto pRecord: precords) {
         Block *blk = disk->blkOf(pRecord);
         uniBlk.insert(blk);
     }
     vector<_record> records;
 
-    for(auto pBlk : uniBlk) {
+    for (auto pBlk: uniBlk) {
         auto tmp = disk->getAllFromBlock(pBlk);
-        for(auto r:tmp) {
-            if(r.numVotes == 500) records.push_back(r);
+        for (auto r: tmp) {
+            if (r.numVotes == 500) records.push_back(r);
         }
     }
     cout << "3.2 number of accessed data blocks: " << uniBlk.size() << "\n";
@@ -325,7 +294,7 @@ void experiment3(tree *tr)
     double avg = double(sum) / 10.0 / records.size();
 
     cout << "3.3 average value of averageRating: " << avg << "\n";
-    cout << "3.4 running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "3.4 running time of retrieval process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     start = chrono::steady_clock::now();
 
@@ -335,11 +304,11 @@ void experiment3(tree *tr)
     sum = 0;
     int cnt = 0;
     int numAccessedBlock = 0;
-    while(blk_records.size() != 0){
+    while (blk_records.size() != 0) {
 
-        numAccessedBlock ++;
-        for(auto r: blk_records){
-            if(r.numVotes == 500)  {
+        numAccessedBlock++;
+        for (auto r: blk_records) {
+            if (r.numVotes == 500) {
                 sum += r.rating;
                 cnt += 1;
             }
@@ -353,15 +322,14 @@ void experiment3(tree *tr)
 
     cout << "3.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
     cout << "3.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "3.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "3.5.2 running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     cout << "Completed Experiment 3. " << "\n\n";
-         
+
 }
 
 
-void experiment4(tree *tr)
-{
+void experiment4(tree *tr) {
     cout << "Start Emperiment 4: " << "\n";
 
     auto start = chrono::steady_clock::now();
@@ -379,17 +347,17 @@ void experiment4(tree *tr)
 
     auto disk = tr->getDisk();
 
-    unordered_set<Block*> uniBlk;
-    for(auto pRecord: precords) {
+    unordered_set<Block *> uniBlk;
+    for (auto pRecord: precords) {
         Block *blk = disk->blkOf(pRecord);
         uniBlk.insert(blk);
     }
     vector<_record> records;
 
-    for(auto pBlk : uniBlk) {
+    for (auto pBlk: uniBlk) {
         auto tmp = disk->getAllFromBlock(pBlk);
-        for(auto r:tmp) {
-            if(r.numVotes>= 30000 && r.numVotes<= 40000) records.push_back(r);
+        for (auto r: tmp) {
+            if (r.numVotes >= 30000 && r.numVotes <= 40000) records.push_back(r);
         }
     }
     cout << "4.2 number of accessed data blocks: " << uniBlk.size() << "\n";
@@ -401,7 +369,7 @@ void experiment4(tree *tr)
     double avg = double(sum) / 10.0 / records.size();
 
     cout << "4.3 average value of averageRating: " << avg << "\n";
-    cout << "4.4 running time of retrieval process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "4.4 running time of retrieval process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     start = chrono::steady_clock::now();
 
@@ -411,11 +379,11 @@ void experiment4(tree *tr)
     sum = 0;
     int cnt = 0;
     int numAccessedBlock = 0;
-    while(blk_records.size() != 0){
+    while (blk_records.size() != 0) {
 
-        numAccessedBlock ++;
-        for(auto r: blk_records){
-            if(r.numVotes>= 30000 && r.numVotes<= 40000)  {
+        numAccessedBlock++;
+        for (auto r: blk_records) {
+            if (r.numVotes >= 30000 && r.numVotes <= 40000) {
                 sum += r.rating;
                 cnt += 1;
             }
@@ -429,7 +397,7 @@ void experiment4(tree *tr)
 
     cout << "4.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
     cout << "4.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "4.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "4.5.2 running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     cout << "Completed Experiment 4. " << "\n\n";
 }
@@ -438,9 +406,9 @@ int numOfKeyInDisk(Disk<_record> *disk, int key) {
     disk->innitializeScan();
     vector<_record> blk_records = disk->linearScanNextBlk();
     int cnt = 0;
-    while(blk_records.size() != 0){
-        for(auto r: blk_records){
-            if(r.numVotes == key)  {
+    while (blk_records.size() != 0) {
+        for (auto r: blk_records) {
+            if (r.numVotes == key) {
                 cnt += 1;
             }
         }
@@ -450,16 +418,15 @@ int numOfKeyInDisk(Disk<_record> *disk, int key) {
 }
 
 
-void experiment5(tree *tr)
-{
+void experiment5(tree *tr) {
     cout << "Start Experiment 5: " << "\n";
 
-    Disk disk_copy = Disk(* (tr->getDisk()) );
+    Disk disk_copy = Disk(*(tr->getDisk()));
 
     vector<_record *> precords = tr->query(_key{1000}, _key{1000});
     int numOfKeyInTree = precords.size();
 
-    cout << "5.0 number of records to delete (numVotes = 1000)  : " <<  numOfKeyInTree << "\n";
+    cout << "5.0 number of records to delete (numVotes = 1000)  : " << numOfKeyInTree << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -475,7 +442,7 @@ void experiment5(tree *tr)
     tr->printRootInfo();
     cout << "\n";
 
-    cout << "5.4 running time of deletion process: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "5.4 running time of deletion process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     //get number of records that (numVoted = 1000) in disk_copy before delete
     int numTargetBeforeD = numOfKeyInDisk(&disk_copy, 1000);
@@ -489,30 +456,31 @@ void experiment5(tree *tr)
     vector<_record> blk_records = disk_copy.linearScanNextBlk();
     int numAccessedBlock = 0;
 
-    while(blk_records.size() != 0){
-        numAccessedBlock ++;
+    while (blk_records.size() != 0) {
+        numAccessedBlock++;
         unordered_set<int> vjs;
 
-        for(int i=0; i<blk_records.size();i++){
+        for (int i = 0; i < blk_records.size(); i++) {
             _record r = blk_records[i];
-            if(r.numVotes == 1000)  {
+            if (r.numVotes == 1000) {
                 vjs.insert(i);
             }
         }
-        if(vjs.size()>0) disk_copy.deleteFromLastScanedBlkForLinearScan(vjs);
+        if (vjs.size() > 0) disk_copy.deleteFromLastScanedBlkForLinearScan(vjs);
 
         blk_records = disk_copy.linearScanNextBlk();
     }
-    
+
     end = chrono::steady_clock::now();
     diff = end - start;
 
     //get number of records that (numVoted = 1000) in disk_copy after delete
     int numTargetAfterD = numOfKeyInDisk(&disk_copy, 1000);
 
-    cout << "5.5.0 number of records (numVotes = 1000) decreases from " << numTargetBeforeD << " to " << numTargetAfterD << " after linear-scan deletion\n";
+    cout << "5.5.0 number of records (numVotes = 1000) decreases from " << numTargetBeforeD << " to " << numTargetAfterD
+         << " after linear-scan deletion\n";
     cout << "5.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "5.5.2 running time of linear scan: " << chrono::duration <double, milli> (diff).count() << " ms \n";
+    cout << "5.5.2 running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     cout << "Completed Experiment 5. " << "\n\n";
 }
@@ -532,12 +500,11 @@ void runExperiment() {
     experiment5(tr);
 }
 
-int main()
-{
+int main() {
     srand(43); // for consistent output
 
-    // correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
-    // findBestN(); // simulate 1,000,000 insertions, and get best n, (it might output different optimal n each time, but we will choose one in our following experiment)
+//     correctnessTest<MAXN>(); // check correctness from n = 2 to n = 15
+//     findBestN(); // simulate insertions, and get best n, (it might output different optimal n each time, but we will choose one in our following experiment)
 
     cout << "size of struct key: " << sizeof(_key) << "\n";
     cout << "size of struct record: " << sizeof(_record) << "\n";

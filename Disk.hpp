@@ -63,7 +63,7 @@ public:
 
     Disk(const Disk &b) : poolSize{b.poolSize}, numBlock{b.numBlock},
                           numTPerBlk{b.numTPerBlk}, rawDisk{new char[poolSize]},
-                          unallocated{b.unallocated}, bitmap{b.bitmap}, blkId{b.blkId}, 
+                          unallocated{b.unallocated}, bitmap{b.bitmap}, blkId{b.blkId},
                           nextScanBlkId{0} {
         memcpy(this->rawDisk, b.rawDisk, sizeof(char) * poolSize);
     }
@@ -177,12 +177,12 @@ public:
         Block *blkStart = (Block *) rawDisk;
         Block *curBlk = blkStart + nextScanBlkId;
 
-        do{
-            if(nextScanBlkId==blkId) return vector<T>();
+        do {
+            if (nextScanBlkId == blkId) return vector<T>();
 
             curBlk = blkStart + nextScanBlkId;
             int i = nextScanBlkId;
-            
+
             for (int j = 0; j < numTPerBlk; j++) {
                 if (bitmap[i][j]) {
                     allocated = true;
@@ -190,15 +190,15 @@ public:
                 }
             }
 
-            nextScanBlkId ++;
-        }while(! allocated);
+            nextScanBlkId++;
+        } while (!allocated);
 
         return getAllFromBlock(curBlk);
     }
 
     //vjs are indexes of the T in the just return vector<T>
-    void deleteFromLastScanedBlkForLinearScan(unordered_set<int> vjs){
-        int i = nextScanBlkId -1;
+    void deleteFromLastScanedBlkForLinearScan(unordered_set<int> vjs) {
+        int i = nextScanBlkId - 1;
         int cnt_vj = -1;
         vector<int> js;
 
@@ -207,12 +207,12 @@ public:
             if (bitmap[i][j]) {
                 cnt_vj++;
 
-                if(vjs.count(cnt_vj)>0) js.push_back(j);
+                if (vjs.count(cnt_vj) > 0) js.push_back(j);
             }
         }
 
-        for(auto j:js){
-            T* pT = getTAddFromId(i, j);
+        for (auto j: js) {
+            T *pT = getTAddFromId(i, j);
             deallocate(pT);
         }
     }
