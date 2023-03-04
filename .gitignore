@@ -5,5 +5,5 @@
 *.exe
 cmake-build-debug
 CMakeLists.txt
-lab.out
+lab.exe
 *.txt

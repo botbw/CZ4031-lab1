@@ -434,8 +434,7 @@ void experiment4(tree *tr)
     cout << "Completed Experiment 4. " << "\n\n";
 }
 
-int numOfKeyInDisk(Disk<_record> *disk, int key){
-
+int numOfKeyInDisk(Disk<_record> *disk, int key) {
     disk->innitializeScan();
     vector<_record> blk_records = disk->linearScanNextBlk();
     int cnt = 0;
@@ -536,17 +535,15 @@ void runExperiment() {
 int main()
 {
     srand(43); // for consistent output
+
     // correctnessTest<MAXN>(); // check correctness from n = 15 to n = 2
-    //    findBestN(); // simulate 1,000,000 insertions, and get best n 
-    // (it might output different optimal n each time, but we will choose one in our following experiment)
+    // findBestN(); // simulate 1,000,000 insertions, and get best n, (it might output different optimal n each time, but we will choose one in our following experiment)
+
     cout << "size of struct key: " << sizeof(_key) << "\n";
     cout << "size of struct record: " << sizeof(_record) << "\n";
     cout << "Set parameter N = " << N << ", so the size of tree node is " << sizeof(tree::node) << " bytes\n";
 
     cout << "experiment starts: " << endl;
-    //clock_t start = clock();
     runExperiment();
-    //clock_t duration = clock() - start;
-    //cout << "Execution time: " << double (duration) / CLOCKS_PER_SEC << " seconds" << endl;
     return 0;
 }
