@@ -215,47 +215,47 @@ tree *constructTreeFromTsv(string filename) {
     }
     fin.close();
 
-    cout << "number of records read: " << cnt << endl;
-    cout << "max of numVotes = " << max_numVotes << ", max of tconst = " << max_tconst << "\n";
+    cout << "Number of records read: " << cnt << endl;
+    cout << "Max of numVotes = " << max_numVotes << ", max of tconst = " << max_tconst << "\n";
 
     return trp;
 }
 
 void experiment1(tree *tr) {
-    cout << "Start Emperiment 1: "
+    cout << "Start experiment 1: "
          << "\n";
 
-    cout << "1.1 number of records: " << tr->size() << "\n";
-    cout << "1.2 size of a record: " << sizeof(_record) << " bytes\n";
+    cout << "1.1 Number of records: " << tr->size() << "\n";
+    cout << "1.2 Size of a record: " << sizeof(_record) << " bytes\n";
 
     tr->getDisk();
 
-    cout << "1.3 number of records stored in a block: " << sizeof(Block) / sizeof(_record) << "\n";
-    cout << "1.4 number of blocks to storing data: " << tr->getDisk()->getAllocatedBlock() << "\n";
+    cout << "1.3 Number of records stored in a block: " << sizeof(Block) / sizeof(_record) << "\n";
+    cout << "1.4 Number of blocks to storing data: " << tr->getDisk()->getAllocatedBlock() << "\n";
 
-    cout << "Completed Experiment 1. "
+    cout << "Completed experiment 1. "
          << "\n\n";
 }
 
 void experiment2(tree *tr) {
-    cout << "Start Emperiment 2: "
+    cout << "Start experiment 2: "
          << "\n";
 
-    cout << "2.1 parameter N: " << N << "\n";
-    cout << "2.2 number of nodes: " << tr->nodeSize() << "\n";
+    cout << "2.1 Parameter N: " << N << "\n";
+    cout << "2.2 Number of nodes: " << tr->nodeSize() << "\n";
 
-    cout << "2.3 number of levels: " << tr->height() << "\n";
-    cout << "2.4 keys of the root node: ";
+    cout << "2.3 Number of levels: " << tr->height() << "\n";
+    cout << "2.4 Keys of the root node: ";
     tr->printRootInfo();
     cout << "\n";
 
-    cout << "Completed Experiment 2. "
+    cout << "Completed experiment 2. "
          << "\n\n";
 }
 
 
 void experiment3(tree *tr) {
-    cout << "Start Emperiment 3: " << "\n";
+    cout << "Start experiment 3: " << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -266,9 +266,9 @@ void experiment3(tree *tr) {
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "number of records that satisfies (numVotes = 500)  : " << precords.size() << "\n";
+    cout << "Number of records that satisfies (numVotes = 500): " << precords.size() << "\n";
 
-    cout << "3.1 number of accessed tree nodes: " << accessedCnt << "\n";
+    cout << "3.1 Number of accessed tree nodes: " << accessedCnt << "\n";
 
     auto disk = tr->getDisk();
 
@@ -285,7 +285,7 @@ void experiment3(tree *tr) {
             if (r.numVotes == 500) records.push_back(r);
         }
     }
-    cout << "3.2 number of accessed data blocks: " << uniBlk.size() << "\n";
+    cout << "3.2 Number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -293,8 +293,8 @@ void experiment3(tree *tr) {
     }
     double avg = double(sum) / 10.0 / records.size();
 
-    cout << "3.3 average value of averageRating: " << avg << "\n";
-    cout << "3.4 running time of retrieval process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
+    cout << "3.3 Average value of averageRating: " << avg << "\n";
+    cout << "3.4 Running time of retrieval process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     start = chrono::steady_clock::now();
 
@@ -320,17 +320,17 @@ void experiment3(tree *tr) {
     end = chrono::steady_clock::now();
     diff = end - start;
 
-    cout << "3.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
-    cout << "3.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "3.5.2 running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
+    cout << "3.5.0 Calculated average value of averageRating from linear scan: " << avg << "\n";
+    cout << "3.5.1 Number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "3.5.2 Running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
-    cout << "Completed Experiment 3. " << "\n\n";
+    cout << "Completed experiment 3. " << "\n\n";
 
 }
 
 
 void experiment4(tree *tr) {
-    cout << "Start Emperiment 4: " << "\n";
+    cout << "Start experiment 4: " << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -341,9 +341,9 @@ void experiment4(tree *tr) {
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "number of records that satisfies (numVotes in [30000, 40000])  : " << precords.size() << "\n";
+    cout << "Number of records that satisfies (numVotes in [30000, 40000]): " << precords.size() << "\n";
 
-    cout << "4.1 number of accessed tree nodes: " << accessedCnt << "\n";
+    cout << "4.1 Number of accessed tree nodes: " << accessedCnt << "\n";
 
     auto disk = tr->getDisk();
 
@@ -360,7 +360,7 @@ void experiment4(tree *tr) {
             if (r.numVotes >= 30000 && r.numVotes <= 40000) records.push_back(r);
         }
     }
-    cout << "4.2 number of accessed data blocks: " << uniBlk.size() << "\n";
+    cout << "4.2 Number of accessed data blocks: " << uniBlk.size() << "\n";
 
     int sum = 0;
     for (int i = 0; i < records.size(); i++) {
@@ -368,8 +368,8 @@ void experiment4(tree *tr) {
     }
     double avg = double(sum) / 10.0 / records.size();
 
-    cout << "4.3 average value of averageRating: " << avg << "\n";
-    cout << "4.4 running time of retrieval process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
+    cout << "4.3 Average value of averageRating: " << avg << "\n";
+    cout << "4.4 Running time of retrieval process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     start = chrono::steady_clock::now();
 
@@ -395,11 +395,11 @@ void experiment4(tree *tr) {
     end = chrono::steady_clock::now();
     diff = end - start;
 
-    cout << "4.5.0 calculated average value of averageRating from linear scan: " << avg << "\n";
-    cout << "4.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "4.5.2 running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
+    cout << "4.5.0 Calculated average value of averageRating from linear scan: " << avg << "\n";
+    cout << "4.5.1 Number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "4.5.2 Running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
-    cout << "Completed Experiment 4. " << "\n\n";
+    cout << "Completed experiment 4. " << "\n\n";
 }
 
 int numOfKeyInDisk(Disk<_record> *disk, int key) {
@@ -419,14 +419,14 @@ int numOfKeyInDisk(Disk<_record> *disk, int key) {
 
 
 void experiment5(tree *tr) {
-    cout << "Start Experiment 5: " << "\n";
+    cout << "Start experiment 5: " << "\n";
 
     Disk disk_copy = Disk(*(tr->getDisk()));
 
     vector<_record *> precords = tr->query(_key{1000}, _key{1000});
     int numOfKeyInTree = precords.size();
 
-    cout << "5.0 number of records to delete (numVotes = 1000)  : " << numOfKeyInTree << "\n";
+    cout << "5.0 Number of records to delete (numVotes = 1000): " << numOfKeyInTree << "\n";
 
     auto start = chrono::steady_clock::now();
 
@@ -435,14 +435,14 @@ void experiment5(tree *tr) {
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
 
-    cout << "5.1 updated number of tree nodes: " << tr->nodeSize() << "\n";
-    cout << "5.2 updated tree height: " << tr->height() << "\n";
+    cout << "5.1 Updated number of tree nodes: " << tr->nodeSize() << "\n";
+    cout << "5.2 Updated tree height: " << tr->height() << "\n";
 
-    cout << "5.3 keys of the root node: ";
+    cout << "5.3 Keys of the root node: ";
     tr->printRootInfo();
     cout << "\n";
 
-    cout << "5.4 running time of deletion process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
+    cout << "5.4 Running time of deletion process: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
     //get number of records that (numVoted = 1000) in disk_copy before delete
     int numTargetBeforeD = numOfKeyInDisk(&disk_copy, 1000);
@@ -477,12 +477,12 @@ void experiment5(tree *tr) {
     //get number of records that (numVoted = 1000) in disk_copy after delete
     int numTargetAfterD = numOfKeyInDisk(&disk_copy, 1000);
 
-    cout << "5.5.0 number of records (numVotes = 1000) decreases from " << numTargetBeforeD << " to " << numTargetAfterD
+    cout << "5.5.0 Number of records (numVotes = 1000) decreases from " << numTargetBeforeD << " to " << numTargetAfterD
          << " after linear-scan deletion\n";
-    cout << "5.5.1 number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
-    cout << "5.5.2 running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
+    cout << "5.5.1 Number of data blocks accessed in linear scan: " << numAccessedBlock << "\n";
+    cout << "5.5.2 Running time of linear scan: " << chrono::duration<double, milli>(diff).count() << " ms \n";
 
-    cout << "Completed Experiment 5. " << "\n\n";
+    cout << "Completed experiment 5. " << "\n\n";
 }
 
 
@@ -506,11 +506,11 @@ int main() {
 //     correctnessTest<MAXN>(); // check correctness from n = 2 to n = 15
 //     findBestN(); // simulate insertions, and get best n, (it might output different optimal n each time, but we will choose one in our following experiment)
 
-    cout << "size of struct key: " << sizeof(_key) << "\n";
-    cout << "size of struct record: " << sizeof(_record) << "\n";
+    cout << "Size of struct key: " << sizeof(_key) << " bytes\n";
+    cout << "Size of struct record: " << sizeof(_record) << " bytes\n";
     cout << "Set parameter N = " << N << ", so the size of tree node is " << sizeof(tree::node) << " bytes\n";
-
-    cout << "experiment starts: " << endl;
+    printLinebreak();
+    cout << "Experiment starts: " << endl;
     runExperiment();
     return 0;
 }
