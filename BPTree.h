@@ -10,6 +10,8 @@
 #include <cassert>
 #include <string>
 #include <algorithm>
+#include <cstring>
+
 
 using namespace std;
 
